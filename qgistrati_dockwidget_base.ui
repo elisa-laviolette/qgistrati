@@ -1,0 +1,2024 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>QGIStratiDockWidgetBase</class>
+ <widget class="QDockWidget" name="QGIStratiDockWidgetBase">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>494</width>
+    <height>878</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>QGIStrati</string>
+  </property>
+  <widget class="QWidget" name="dockWidgetContents">
+   <layout class="QVBoxLayout" name="verticalLayout_9">
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>1</horstretch>
+        <verstretch>1</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+      <property name="currentIndex">
+       <number>1</number>
+      </property>
+      <widget class="QWidget" name="dems">
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="whatsThis">
+        <string/>
+       </property>
+       <attribute name="title">
+        <string>MNT</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_8">
+        <item>
+         <widget class="QScrollArea" name="scrollArea">
+          <property name="sizeAdjustPolicy">
+           <enum>QAbstractScrollArea::AdjustToContentsOnFirstShow</enum>
+          </property>
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>438</width>
+             <height>747</height>
+            </rect>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_23">
+            <item>
+             <widget class="QToolBox" name="toolBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="autoFillBackground">
+               <bool>false</bool>
+              </property>
+              <property name="styleSheet">
+               <string notr="true"/>
+              </property>
+              <property name="currentIndex">
+               <number>2</number>
+              </property>
+              <widget class="QWidget" name="dem_creation">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>356</width>
+                 <height>660</height>
+                </rect>
+               </property>
+               <property name="whatsThis">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Créez un Modèle Numérique de Terrain à partir de données topographiques, telles que des artefacts ou des points relevés à la station totale.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:large; font-weight:600;&quot;&gt;Données topographiques&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Vous pouvez utiliser des points ou des polygones pour la génération du MNT. Si vous sélectionnez une couche de polygones, l'algorithme utilisera leur centroïde comme source de donnée topographique.&lt;/p&gt;&lt;p&gt;La couche choisie doit contenir un champ numérique correspondant à l'altitude en mètres.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:large; font-weight:600;&quot;&gt;Points de référence&lt;/span&gt;&lt;/p&gt;&lt;p&gt;À partir des données vectorielles saisies, l'algorithme crée des points de référence topographiques réguliers en fonction de la distance et du type de résumé choisis. Cela permet d'obtenir un MNT plus lisse qu'en utilisant directement les données originales.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Vous pouvez par exemple choisir d'utiliser l'altitude maximale : chaque point de référence contiendra alors une valeur d'altitude correspondant au maximum des données originales qu'elle représente, c'est-à-dire situées dans un rayon correspondant à la distance saisie.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:large; font-weight:600;&quot;&gt;Méthode d'interpolation&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Vous avez le choix entre trois méthodes d'interpolation offertes par QGIS : Bspline (polynomiale), TIN (par triangulation) et IDW (par pondération de la distance inverse).&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:large; font-weight:600;&quot;&gt;Extension et résolution du Modèle Numérique de Terrain&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Vous devez indiquer l'extension et la résolution du MNT créé. &lt;/p&gt;&lt;p&gt;Pour l'extension, vous avez le choix entre saisir manuellement des coordonnées ou sélectionner une couche de votre projet dont l'extension correspond à celle souhaitée. Vous pouvez alors choisir de découper le futur MNT aux limites indiquées par les entités contenues dans cette couche d'extension.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Cela est particulièrement utile si vous disposez d'une couche contenant des polygones correspondant aux aires à considérer, par exemple représentant le carroyage ou les zones fouillées.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:large; font-weight:600;&quot;&gt;Filtre&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Vous avez la possibilité d'entrer une expression servant à filtrer la couche de données topographiques avant la création du MNT. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Si, par exemple, votre couche de données brutes contient des points correspondant à plusieurs niveaux archéologiques différents, vous pouvez utiliser un filtre de type &amp;quot;Niveau&amp;quot; = 'MonNiveauArchéologique' afin de créer le MNT pour un seul niveau à la fois.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <attribute name="label">
+                <string>Création de MNT</string>
+               </attribute>
+               <layout class="QVBoxLayout" name="verticalLayout_10">
+                <item>
+                 <widget class="QLabel" name="label">
+                  <property name="text">
+                   <string>Couche source contenant les données topographiques</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="dem_creation_topo_layer_comboBox">
+                  <property name="toolTip">
+                   <string>Sélectionnez la couche de points ou de polygones contenant les données topographiques</string>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true"/>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="dem_creation_topo_layer_checkLabel">
+                  <property name="styleSheet">
+                   <string notr="true">color: red;</string>
+                  </property>
+                  <property name="text">
+                   <string>TextLabel</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_2">
+                  <property name="text">
+                   <string>Champ d'altitude</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="dem_creation_altitude_field_comboBox">
+                  <property name="toolTip">
+                   <string>Sélectionnez le champ contenant l'altitude dans la couche de données topographiques</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="dem_creation_altitude_field_checkLabel">
+                  <property name="styleSheet">
+                   <string notr="true">color: red;</string>
+                  </property>
+                  <property name="text">
+                   <string>TextLabel</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_4">
+                  <property name="text">
+                   <string>Distance entre les points de référence</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="dem_creation_distance_doubleSpinBox">
+                  <property name="toolTip">
+                   <string>Entrez la distance souhaitée (en mètres) entre chaque point de référence d'altitude</string>
+                  </property>
+                  <property name="maximum">
+                   <double>10000.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.010000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_6">
+                  <property name="text">
+                   <string>Type de résumé</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="dem_creation_aggregate_type_comboBox">
+                  <property name="toolTip">
+                   <string>Sélectionnez la manière dont vous souhaitez regrouper l'altitude des points ou polygones voisins</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_7">
+                  <property name="text">
+                   <string>Méthode d'interpolation</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="dem_creation_interpolation_method_comboBox">
+                  <property name="toolTip">
+                   <string>Sélectionnez la méthode d'interpolation</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_3">
+                  <property name="text">
+                   <string>Extension</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout">
+                  <item>
+                   <widget class="QRadioButton" name="dem_creation_extent_layer_radioButton">
+                    <property name="text">
+                     <string>Couche</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                    <attribute name="buttonGroup">
+                     <string notr="true">buttonGroup</string>
+                    </attribute>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QRadioButton" name="dem_creation_extent_coords_radioButton">
+                    <property name="toolTip">
+                     <string>Sélectionnez une méthode pour configurer l'extension du futur MNT</string>
+                    </property>
+                    <property name="text">
+                     <string>Coordonnées</string>
+                    </property>
+                    <attribute name="buttonGroup">
+                     <string notr="true">buttonGroup</string>
+                    </attribute>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="dem_creation_extent_layer_comboBox">
+                  <property name="toolTip">
+                   <string>Sélectionnez une couche indiquant l'extension du futur MNT</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="dem_creation_clipping_checkBox">
+                  <property name="toolTip">
+                   <string>Découper le futur MNT d'après les limites des entités de la couche d'extension sélectionnée ?</string>
+                  </property>
+                  <property name="text">
+                   <string>Découper aux limites</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="dem_creation_extent_lineEdit">
+                  <property name="toolTip">
+                   <string>Entrez les 4 coordonnées correspondant à l'extension, séparées par des virgules</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="dem_creation_extent_checkLabel">
+                  <property name="styleSheet">
+                   <string notr="true">color: red;</string>
+                  </property>
+                  <property name="text">
+                   <string>TextLabel</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_8">
+                  <property name="text">
+                   <string>Résolution</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="dem_creation_resolution_doubleSpinBox">
+                  <property name="toolTip">
+                   <string>Entrez la résolution (en mètres) du futur MNT</string>
+                  </property>
+                  <property name="minimum">
+                   <double>0.010000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>10000.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.010000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_5">
+                  <property name="text">
+                   <string>Expression de filtre</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QgsExpressionLineEdit" name="dem_creation_filter_expression_widget" native="true">
+                  <property name="toolTip">
+                   <string>Vous pouvez entrer ici une expression afin de filtrer la couche de données topographiques avant de créer le MNT</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="dem_creation_filter_expression_checkLabel">
+                  <property name="styleSheet">
+                   <string notr="true">color: red;</string>
+                  </property>
+                  <property name="text">
+                   <string>TextLabel</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="dem_creation_pushButton">
+                  <property name="toolTip">
+                   <string>Lancez la création du MNT</string>
+                  </property>
+                  <property name="text">
+                   <string>Construire le MNT</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+              <widget class="QWidget" name="dem_correction">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>227</width>
+                 <height>366</height>
+                </rect>
+               </property>
+               <property name="whatsThis">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;À partir d'un ensemble de Modèles Numériques de Terrain, créez des MNT corrigés en fonction de règles stratigraphiques définies reliant les MNT entre eux.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:large; font-weight:600;&quot;&gt;Règles stratigraphiques&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Vous pouvez définir des règles qui relient les MNT sélectionnés entre eux. Chaque règle définit un MNT &amp;quot;stable&amp;quot; ou parent et un MNT &amp;quot;à modifier&amp;quot; ou enfant ; pour chacune de ces règles, le MNT &amp;quot;à modifier&amp;quot; sera corrigé en fonction de sa relation stratigraphique (&amp;quot;A sur B&amp;quot; / &amp;quot;A sous B&amp;quot;), de manière à éviter le croisement des MNT concernés.&lt;/p&gt;&lt;p&gt;L'ordre des règles importe ! L'algorithme les applique de haut en bas de la liste.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Prenons l'exemple de 3 MNT correspondant à 3 niveaux archéologiques superposés A, B, et C, du plus superficiel au plus profond. Si l'on choisit de prendre le niveau C comme référence, on ajoute les règles stratigraphiques suivantes :&lt;/span&gt;&lt;/p&gt;&lt;ul style=&quot;margin-top: 0px; margin-bottom: 0px; margin-left: 0px; margin-right: 0px; -qt-list-indent: 1;&quot;</string>
+               </property>
+               <attribute name="label">
+                <string>Correction stratigraphique</string>
+               </attribute>
+               <layout class="QVBoxLayout" name="verticalLayout">
+                <item>
+                 <widget class="QLabel" name="label_9">
+                  <property name="text">
+                   <string>MNT à corriger</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QListView" name="dem_correction_dems_listView">
+                  <property name="toolTip">
+                   <string>Sélectionnez dans la liste les MNT que vous souhaitez corriger</string>
+                  </property>
+                  <property name="selectionMode">
+                   <enum>QAbstractItemView::NoSelection</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="dem_correction_dems_checkLabel">
+                  <property name="styleSheet">
+                   <string notr="true">color: red;</string>
+                  </property>
+                  <property name="text">
+                   <string>TextLabel</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_10">
+                  <property name="text">
+                   <string>Règles stratigraphiques</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QTableWidget" name="dem_correction_rules_tableWidget">
+                  <property name="toolTip">
+                   <string>Entrez dans ce tableau les règles stratigraphiques à suivre</string>
+                  </property>
+                  <property name="columnCount">
+                   <number>3</number>
+                  </property>
+                  <column/>
+                  <column/>
+                  <column/>
+                 </widget>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_2">
+                  <property name="sizeConstraint">
+                   <enum>QLayout::SetDefaultConstraint</enum>
+                  </property>
+                  <item>
+                   <widget class="QPushButton" name="dem_correction_add_rule_pushButton">
+                    <property name="toolTip">
+                     <string>Ajoutez une règle stratigraphique</string>
+                    </property>
+                    <property name="text">
+                     <string>Nouveau</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="dem_correction_delete_rule_pushButton">
+                    <property name="toolTip">
+                     <string>Supprimez la règle stratigraphique sélectionnée</string>
+                    </property>
+                    <property name="text">
+                     <string>Supprimer</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <widget class="QLabel" name="dem_correction_rules_checkLabel">
+                  <property name="styleSheet">
+                   <string notr="true">color: red;</string>
+                  </property>
+                  <property name="text">
+                   <string>TextLabel</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="dem_correction_pushButton">
+                  <property name="toolTip">
+                   <string>Lancez la correction des MNT</string>
+                  </property>
+                  <property name="text">
+                   <string>Corriger les MNT</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+              <widget class="QWidget" name="dem_harmonization">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>414</width>
+                 <height>621</height>
+                </rect>
+               </property>
+               <attribute name="label">
+                <string>Harmonisation du style</string>
+               </attribute>
+               <layout class="QVBoxLayout" name="verticalLayout_2">
+                <item>
+                 <widget class="QLabel" name="label_33">
+                  <property name="text">
+                   <string>MNT</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QListView" name="dem_harmonization_dems_listView">
+                  <property name="toolTip">
+                   <string>Sélectionnez dans la liste les MNT auxquels vous souhaitez appliquer le style</string>
+                  </property>
+                  <property name="selectionMode">
+                   <enum>QAbstractItemView::NoSelection</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="dem_harmonization_dems_checkLabel">
+                  <property name="styleSheet">
+                   <string notr="true">color: red;</string>
+                  </property>
+                  <property name="text">
+                   <string>TextLabel</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_3">
+                  <item>
+                   <widget class="QLabel" name="label_34">
+                    <property name="text">
+                     <string>Dégradé</string>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QgsColorRampButton" name="dem_harmonization_gradient_toolButton">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="baseSize">
+                     <size>
+                      <width>0</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                    <property name="toolTip">
+                     <string>Sélectionnez un dégradé de couleurs à appliquer aux MNT</string>
+                    </property>
+                    <property name="text">
+                     <string>...</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
+                <item>
+                 <widget class="QLabel" name="dem_harmonization_gradient_checkLabel">
+                  <property name="styleSheet">
+                   <string notr="true">color: red;</string>
+                  </property>
+                  <property name="text">
+                   <string>TextLabel</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_35">
+                  <property name="text">
+                   <string>Intervalle</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="dem_harmonization_interval_doubleSpinBox">
+                  <property name="toolTip">
+                   <string>Entrez l'intervalle (en mètres) entre chaque couleur</string>
+                  </property>
+                  <property name="minimum">
+                   <double>0.010000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>10000.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.010000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>0.010000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="dem_harmonization_contour_checkBox">
+                  <property name="toolTip">
+                   <string>Ajouter une couche de lignes de contour ?</string>
+                  </property>
+                  <property name="text">
+                   <string>Lignes de contour</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="dem_harmonization_contour_elevation_field_label">
+                  <property name="text">
+                   <string>Nom du champ d'élévation des lignes de contour</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="dem_harmonization_contour_elevation_field_lineEdit">
+                  <property name="toolTip">
+                   <string>Entrez le nom du champ dans la couche des lignes de contour correspondant à l'altitude associée à chaque ligne</string>
+                  </property>
+                  <property name="text">
+                   <string>ELEV</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="dem_harmonization_contour_elevation_field_name_checkLabel">
+                  <property name="styleSheet">
+                   <string notr="true">color: red;</string>
+                  </property>
+                  <property name="text">
+                   <string>TextLabel</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="dem_harmonization_hillshade_checkBox">
+                  <property name="toolTip">
+                   <string>Ajouter une couche d'ombrages ?</string>
+                  </property>
+                  <property name="text">
+                   <string>Ombrage</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="dem_harmonization_z_factor_label">
+                  <property name="text">
+                   <string>Facteur Z</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="dem_harmonization_z_factor_doubleSpinBox">
+                  <property name="toolTip">
+                   <string>Entrez le facteur multiplicateur Z de la couche d'ombrage</string>
+                  </property>
+                  <property name="value">
+                   <double>1.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="dem_harmonization_azimuth_label">
+                  <property name="text">
+                   <string>Azimut</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="dem_harmonization_azimuth_doubleSpinBox">
+                  <property name="toolTip">
+                   <string>Entrez la valeur d'azimut pour la couche d'ombrage</string>
+                  </property>
+                  <property name="decimals">
+                   <number>0</number>
+                  </property>
+                  <property name="maximum">
+                   <double>100000000000.000000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>300.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="dem_harmonization_vertical_angle_label">
+                  <property name="text">
+                   <string>Angle vertical</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="dem_harmonization_vertical_angle_doubleSpinBox">
+                  <property name="toolTip">
+                   <string>Entrez la valeur d'angle vertical pour la couche d'ombrage</string>
+                  </property>
+                  <property name="value">
+                   <double>40.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="dem_harmonization_pushButton">
+                  <property name="toolTip">
+                   <string>Lancez l'harmonisation des MNT</string>
+                  </property>
+                  <property name="text">
+                   <string>Harmoniser les MNT</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="profiles_projections">
+       <attribute name="title">
+        <string>Profils + Projections</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_13">
+        <item>
+         <widget class="QToolBox" name="toolBox_2">
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="profiles_creation">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>440</width>
+             <height>579</height>
+            </rect>
+           </property>
+           <property name="whatsThis">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Créez des lignes de profil à partir de Modèles Numériques de Terrain, en les projetant verticalement sur les axes choisis.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:large; font-weight:600;&quot;&gt;Profils à partir des axes&lt;/span&gt;&lt;/p&gt;&lt;p&gt;À partir de l'ensemble des MNT sélectionnés et d'une couche de lignes contenant les axes de projection, l'algorithme génère une couche contenant une ligne de profil pour chaque MNT et pour chaque axe.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:large; font-weight:600;&quot;&gt;Exagération verticale&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Lorsque les altitudes sont très proches les unes des autres, il peut être utile de les multiplier par un facteur dit d'exagération verticale, permettant de dilater (ou de condenser, si le facteur est inférieur à 1) les altitudes.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:large; font-weight:600;&quot;&gt;Intersection&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Vous avez la possibilité d'intersecter les axes avec une couche de polygones de votre choix avant de créer les lignes de profil. Le champ d'identification sélectionné sera alors transmis aux lignes de profil associées.&lt;/p&gt;&lt;p&gt;Additionnellement, vous pouvez entrer une expression servant à filtrer la couche d'intersection avant la création des profils. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Une fois les lignes de profil créées pour chacun de vos MNT, vous pourriez vouloir rendre visible sur ces lignes l'emplacement de structures en creux, par exemple, pour expliquer les irrégularités dans la courbe. Pour cela, il vous faut créer de nouvelles lignes de profil en choisissant pour couche d'intersection la couche contenant les polygones correspondant aux structures. Pour ne prendre en compte que les structures en creux, vous pouvez ajouter un filtre de type &amp;quot;Type de structure&amp;quot; = 'Structure en creux'. Une fois ces profils créés, vous pourrez les afficher avec une couleur ou une épaisseur différente de celles des lignes de profil générales, et même les étiqueter avec le numéro de structure grâce au champ d'identification que vous aurez choisi.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:large; font-weight:600;&quot;&gt;Quadrillage&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Vous pouvez choisir de générer une couche de quadrillage pour vos lignes de profil. Il s'agit d'une couche contenant, pour chaque axe, une ligne horizontale correspondant à une altitude minimale, et une ligne verticale couvrant l'amplitude des altitudes. L'intervalle désigne la précision avec laquelle placer ces lignes.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <attribute name="label">
+            <string>Création des profils</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_5">
+            <item>
+             <widget class="QLabel" name="label_11">
+              <property name="text">
+               <string>Couche contenant les axes</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="profile_creation_axis_layer_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez la couche de lignes contenant les axes de projection</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_12">
+              <property name="text">
+               <string>MNT</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QListView" name="profile_creation_dems_listView">
+              <property name="toolTip">
+               <string>Sélectionnez dans la liste les MNT que vous souhaitez projeter</string>
+              </property>
+              <property name="selectionMode">
+               <enum>QAbstractItemView::NoSelection</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="profile_creation_dems_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_13">
+              <property name="text">
+               <string>Exagération verticale</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="profile_creation_vertical_exaggeration_spinBox">
+              <property name="toolTip">
+               <string>Entrez le facteur d'exagération verticale</string>
+              </property>
+              <property name="value">
+               <number>1</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_14">
+              <property name="text">
+               <string>Couche d'intersection</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="profile_creation_intersect_layer_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez le cas échéant la couche de polygones à intersecter avec les profils</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="profile_creation_intersect_id_field_label">
+              <property name="text">
+               <string>Champ d'identification</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="profile_creation_intersect_id_field_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez le champ de la couche d'intersection contenant l'identifiant des entités</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="profile_creation_intersect_id_field_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="profile_creation_intersect_filter_expression_label">
+              <property name="toolTip">
+               <string>Entrez une exp</string>
+              </property>
+              <property name="text">
+               <string>Expression de filtre</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QgsExpressionLineEdit" name="profile_creation_intersect_filter_expression_widget" native="true">
+              <property name="toolTip">
+               <string>Vous pouvez entrer ici une expression afin de filtrer la couche d'intersection avant de créer les profils</string>
+              </property>
+              <widget class="QLabel" name="profile_creation_intersect_filter_expression_checkLabel">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>60</width>
+                 <height>16</height>
+                </rect>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">color: red;</string>
+               </property>
+               <property name="text">
+                <string>TextLabel</string>
+               </property>
+              </widget>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_4">
+              <item>
+               <widget class="QCheckBox" name="profile_creation_grid_checkBox">
+                <property name="toolTip">
+                 <string>Créer un quadrillage autour des profils ?</string>
+                </property>
+                <property name="text">
+                 <string>Créer un quadrillage</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_3">
+                <item>
+                 <widget class="QLabel" name="profile_creation_grid_interval_label">
+                  <property name="text">
+                   <string>Intervalle</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="profile_creation_grid_interval_doubleSpinBox">
+                  <property name="toolTip">
+                   <string>Entrez l'intervalle de précision pour la création du quadrillage</string>
+                  </property>
+                  <property name="minimum">
+                   <double>0.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>10000.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.010000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>0.010000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="profile_creation_extremities_checkBox">
+              <property name="toolTip">
+               <string>Générer les points correspondant aux extrémités d'axes ?</string>
+              </property>
+              <property name="text">
+               <string>Ajouter les extrémités d'axes</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="profile_creation_pushButton">
+              <property name="toolTip">
+               <string>Lancez la création des profils</string>
+              </property>
+              <property name="text">
+               <string>Créer les profils</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="object_projection">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>440</width>
+             <height>579</height>
+            </rect>
+           </property>
+           <attribute name="label">
+            <string>Projection des objets</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_15">
+            <item>
+             <widget class="QLabel" name="label_16">
+              <property name="text">
+               <string>Couche contenant les objets</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="object_projection_objects_layer_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez la couche de points ou de polygones contenant les objets que vous souhaitez projeter</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="object_projection_objects_layer_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_17">
+              <property name="text">
+               <string>Champ d'altitude</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="object_projection_altitude_field_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez le champ contenant l'altitude dans la couche d'objets</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="object_projection_altitude_field_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_18">
+              <property name="text">
+               <string>Couche contenant les axes</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="object_projection_axis_layer_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez la couche de lignes contenant les axes de projection</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="object_projection_axis_layer_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_19">
+              <property name="text">
+               <string>Distance maximale de projection</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="object_projection_distance_doubleSpinBox">
+              <property name="toolTip">
+               <string>Entrez la distance maximale (en mètres) entre un axe et un objet pour que celui-ci soit projeté</string>
+              </property>
+              <property name="minimum">
+               <double>0.010000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>10000.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.010000000000000</double>
+              </property>
+              <property name="value">
+               <double>1.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_20">
+              <property name="text">
+               <string>Exagération verticale</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="object_projection_vertical_exaggeration_spinBox">
+              <property name="toolTip">
+               <string>Entrez le facteur d'exagération verticale</string>
+              </property>
+              <property name="value">
+               <number>1</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_5">
+              <item>
+               <widget class="QCheckBox" name="object_projection_grid_checkBox">
+                <property name="toolTip">
+                 <string>Créer un quadrillage autour des projections ?</string>
+                </property>
+                <property name="text">
+                 <string>Créer un quadrillage</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_6">
+                <item>
+                 <widget class="QLabel" name="object_projection_grid_interval_label">
+                  <property name="text">
+                   <string>Intervalle</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="object_projection_grid_interval_doubleSpinBox">
+                  <property name="toolTip">
+                   <string>Entrez l'intervalle de précision pour la création du quadrillage</string>
+                  </property>
+                  <property name="minimum">
+                   <double>0.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>10000.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.010000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>0.010000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="object_projection_extremities_checkBox">
+              <property name="toolTip">
+               <string>Générer les points correspondant aux extrémités d'axes ?</string>
+              </property>
+              <property name="text">
+               <string>Ajouter les extrémités d'axes</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="object_projection_pushButton">
+              <property name="toolTip">
+               <string>Lancez la projection des objets</string>
+              </property>
+              <property name="text">
+               <string>Projeter les objets</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="link_creation">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>353</width>
+             <height>421</height>
+            </rect>
+           </property>
+           <attribute name="label">
+            <string>Création des liens</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_7">
+            <item>
+             <widget class="QLabel" name="label_21">
+              <property name="text">
+               <string>Couche contenant les liens</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="link_creation_links_layer_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez la couche sans géométrie contenant les données de liens entre les objets</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="link_creation_links_layer_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_22">
+              <property name="text">
+               <string>Couche contenant les objets</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="link_creation_objects_layer_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez la couche de points ou de polygones contenant les objets que vous souhaitez relier</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="link_creation_objects_layer_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_23">
+              <property name="text">
+               <string>Champs d'identification objets dans la couche de liens</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QListView" name="link_creation_links_layer_fields_listView">
+              <property name="toolTip">
+               <string>Sélectionnez dans la liste les 2 champs servant à identifier les objets reliés</string>
+              </property>
+              <property name="selectionMode">
+               <enum>QAbstractItemView::NoSelection</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="link_creation_links_layer_fields_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_24">
+              <property name="text">
+               <string>Champ d'identification dans la couche d'objets</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="link_creation_objects_layer_field_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez le champ servant à identifier chaque objet</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="link_creation_objects_layer_field_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="link_creation_pushButton">
+              <property name="toolTip">
+               <string>Lancez la création des liens</string>
+              </property>
+              <property name="text">
+               <string>Construire les liens</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="link_projection">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>353</width>
+             <height>691</height>
+            </rect>
+           </property>
+           <attribute name="label">
+            <string>Projection des liens</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_11">
+            <item>
+             <widget class="QLabel" name="label_25">
+              <property name="text">
+               <string>Couche contenant les liens</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="link_projection_links_layer_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez la couche de lignes contenant les liens entre objets</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="link_projection_links_layer_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_26">
+              <property name="text">
+               <string>Couche contenant les objets</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="link_projection_objects_layer_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez la couche de points ou de polygones contenant les objets reliés</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="link_projection_objects_layer_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_28">
+              <property name="text">
+               <string>Champs d'identification objets dans la couche de liens</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QListView" name="link_projection_links_layer_fields_listView">
+              <property name="toolTip">
+               <string>Sélectionnez dans la liste les 2 champs servant à identifier les objets reliés</string>
+              </property>
+              <property name="selectionMode">
+               <enum>QAbstractItemView::NoSelection</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="link_projection_links_layer_fields_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_27">
+              <property name="text">
+               <string>Champ d'identification dans la couche d'objets</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="link_projection_objects_layer_field_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez le champ servant à identifier chaque objet</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="link_projection_objects_layer_field_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_29">
+              <property name="text">
+               <string>Champ d'altitude</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="link_projection_altitude_field_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez le champ contenant l'altitude dans la couche d'objets</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="link_projection_altitude_field_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_30">
+              <property name="text">
+               <string>Couche contenant les axes</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="link_projection_axis_layer_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez la couche de lignes contenant les axes de projection</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="link_projection_axis_layer_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_32">
+              <property name="text">
+               <string>Distance maximale de projection</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="link_projection_distance_doubleSpinBox">
+              <property name="toolTip">
+               <string>Entrez la distance maximale (en mètres) entre un axe et un objet pour que celui-ci soit projeté</string>
+              </property>
+              <property name="minimum">
+               <double>0.010000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>10000.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.010000000000000</double>
+              </property>
+              <property name="value">
+               <double>1.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_31">
+              <property name="text">
+               <string>Exagération verticale</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="link_projection_vertical_exaggeration_spinBox">
+              <property name="toolTip">
+               <string>Entrez le facteur d'exagération verticale</string>
+              </property>
+              <property name="value">
+               <number>1</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="link_projection_pushButton">
+              <property name="toolTip">
+               <string>Lancez la projection des liens</string>
+              </property>
+              <property name="text">
+               <string>Projeter les liens</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="axis_filtering">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>440</width>
+             <height>579</height>
+            </rect>
+           </property>
+           <attribute name="label">
+            <string>Filtrage par axe</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <item>
+             <widget class="QLabel" name="label_40">
+              <property name="text">
+               <string>Couche contenant les axes</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="axis_filtering_axis_layer_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez la couche de lignes contenant les axes de projection</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="axis_filtering_axis_layer_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_36">
+              <property name="text">
+               <string>Champ d'identification dans la couche d'axes</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="axis_filtering_field_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez le champ servant à identifier chaque axe de projection</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="axis_filtering_field_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_41">
+              <property name="text">
+               <string>Axe de filtre</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="axis_filtering_filter_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez l'identifiant de l'axe servant de filtre</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_42">
+              <property name="text">
+               <string>Couches à filtrer</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QListView" name="axis_filtering_layers_listView">
+              <property name="toolTip">
+               <string>Sélectionnez dans la liste les couches que vous souhaitez filtrer</string>
+              </property>
+              <property name="selectionMode">
+               <enum>QAbstractItemView::NoSelection</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="axis_filtering_layers_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_43">
+              <property name="text">
+               <string>Champ d'identification de l'axe dans les couches à filtrer</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="axis_filtering_id_field_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez le champ correspondant à l'identifiant de l'axe dans les couches à filtrer</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="axis_filtering_id_field_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="axis_filtering_pushButton">
+              <property name="toolTip">
+               <string>Lancez le filtre par axe</string>
+              </property>
+              <property name="text">
+               <string>Filtrer par axe</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="layout">
+       <attribute name="title">
+        <string>Mise en page</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_20">
+        <item>
+         <widget class="QToolBox" name="toolBox_4">
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="atlas_configuration">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>445</width>
+             <height>476</height>
+            </rect>
+           </property>
+           <attribute name="label">
+            <string>Configuration de l'atlas</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_12">
+            <item>
+             <widget class="QLabel" name="label_44">
+              <property name="text">
+               <string>Mise en page</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="atlas_configuring_layout_name_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez une mise en page dans laquelle ajouter un atlas</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="atlas_configuring_layout_name_label">
+              <property name="text">
+               <string>Nom de la nouvelle mise en page</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="atlas_configuring_layout_name_lineEdit">
+              <property name="toolTip">
+               <string>Entrez le nom de la nouvelle mise en page</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="atlas_configuring_layout_name_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_46">
+              <property name="text">
+               <string>Couche contenant les axes</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="atlas_configuring_axis_layer_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez la couche de lignes contenant les axes de projection</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="atlas_configuring_axis_layer_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_47">
+              <property name="text">
+               <string>Couches dépendant de l'atlas</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QListView" name="atlas_configuring_layers_listView">
+              <property name="toolTip">
+               <string>Sélectionnez dans la liste les couches que vous souhaitez voir afficher en fonction de l'atlas</string>
+              </property>
+              <property name="selectionMode">
+               <enum>QAbstractItemView::NoSelection</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="atlas_configuring_layers_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_48">
+              <property name="text">
+               <string>Champ d'identification de l'axe dans les couches dépendant de l'atlas</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="atlas_configuring_id_field_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez le champ correspondant à l'identifiant de l'axe dans les couches dépendant de l'atlas</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="atlas_configuring_id_field_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="atlas_configuring_pushButton">
+              <property name="toolTip">
+               <string>Lancez la configuration de l'atlas</string>
+              </property>
+              <property name="text">
+               <string>Configurer l'atlas par axe</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="connection_lines_creation">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>233</width>
+             <height>343</height>
+            </rect>
+           </property>
+           <attribute name="label">
+            <string>Création des lignes de connexion</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_14">
+            <item>
+             <widget class="QLabel" name="label_49">
+              <property name="text">
+               <string>Mise en page</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="connection_lines_creation_layout_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez une mise en page dans laquelle créer les lignes de connexion</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="connection_lines_creation_layout_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_50">
+              <property name="text">
+               <string>Cartes</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QTableWidget" name="connection_lines_creation_maps_tableWidget">
+              <property name="toolTip">
+               <string>Sélectionnez dans la liste les cartes à connecter</string>
+              </property>
+              <property name="columnCount">
+               <number>2</number>
+              </property>
+              <column/>
+              <column/>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="connection_lines_creation_maps_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_51">
+              <property name="text">
+               <string>Champ d'identification</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="connection_lines_creation_id_field_comboBox">
+              <property name="toolTip">
+               <string>Sélectionnez le champ d'identification</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="connection_lines_creation_id_field_checkLabel">
+              <property name="styleSheet">
+               <string notr="true">color: red;</string>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="connection_lines_creation_pushButton">
+              <property name="toolTip">
+               <string>Lancez la création des lignes de connexion</string>
+              </property>
+              <property name="text">
+               <string>Créer les lignes de connexion</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="bottom">
+      <item>
+       <widget class="QProgressBar" name="progressBar">
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="helpButton">
+        <property name="text">
+         <string notr="true">?</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QgsExpressionLineEdit</class>
+   <extends>QWidget</extends>
+   <header>qgis.gui</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QgsColorRampButton</class>
+   <extends>QToolButton</extends>
+   <header>qgis.gui</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+ <buttongroups>
+  <buttongroup name="buttonGroup"/>
+ </buttongroups>
+</ui>

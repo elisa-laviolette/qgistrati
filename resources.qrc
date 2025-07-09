@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/qgistrati" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>
