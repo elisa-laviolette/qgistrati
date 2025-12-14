@@ -609,7 +609,7 @@ class QGIStrati:
 
         self.init = True
 
-        debug_print("INITIATING COMBO BOXES")  
+        # debug_print("INITIATING COMBO BOXES")  
 
         #QApplication.setOverrideCursor(Qt.WaitCursor)
 
@@ -4527,7 +4527,7 @@ class QGIStrati:
         Update combobox value
         """
 
-        debug_print("Updating combobox value...")
+        # debug_print("Updating combobox value...")
 
         if (replace or value == None) and sel != None:
             value = sel
@@ -4536,7 +4536,7 @@ class QGIStrati:
         Return combo box new value
         """
 
-        debug_print("Combo box value successfully updated!")
+        # debug_print("Combo box value successfully updated!")
 
         return value
 
@@ -6727,6 +6727,21 @@ def createProfileGrid(profile, axis_layer, vertical_exaggeration = 1, interval =
         progress_bar.setMaximum(progress_bar_max)
         progress_bar.setValue(10)
 
+    # Check if axis_id field exists, if not use fid
+    has_axis_id = False
+    axis_id_field_name = 'axis_id'
+    try:
+        for field in axis_layer.fields():
+            if field.name() == 'axis_id':
+                has_axis_id = True
+                break
+    except:
+        has_axis_id = True  # Assume it exists if we can't check
+    
+    if not has_axis_id:
+        debug_print("Warning: axis_id field not found in axis layer - using fid instead")
+        axis_id_field_name = 'fid'
+
     """
     Get extent of profile for each axis
     """
@@ -6735,18 +6750,51 @@ def createProfileGrid(profile, axis_layer, vertical_exaggeration = 1, interval =
 
     extents = {}
 
+    # Initialize extents with axis feature IDs (not attribute values)
+    # The profile layer's axis_id should match feature IDs
     for axis in axis_layer.getFeatures():
-
-        extents[axis['axis_id']] = [math.inf, -math.inf, math.inf, -math.inf]
+        # Always use feature ID as the key, since projected_points uses feature IDs
+        extents[axis.id()] = [math.inf, -math.inf, math.inf, -math.inf]
 
     for feat in profile.getFeatures():
-
-        axis_id = feat['axis_id']
+        try:
+            axis_id = feat['axis_id']
+        except KeyError:
+            # If axis_id doesn't exist in profile, try fid
+            try:
+                axis_id = feat['fid']
+            except KeyError:
+                # Skip this feature if we can't determine axis_id
+                continue
+        
         axis_geom = None
-        for axis in axis_layer.getFeatures():
-            if axis['axis_id'] == axis_id:
-                axis_geom = axis.geometry()
-
+        # The axis_id from profile should match the axis feature ID (not the fid attribute)
+        # So we try to match by feature ID first
+        try:
+            axis_feat = axis_layer.getFeature(int(axis_id))
+            try:
+                if axis_feat.isValid():
+                    axis_geom = axis_feat.geometry()
+            except:
+                if axis_feat and hasattr(axis_feat, 'geometry'):
+                    axis_geom = axis_feat.geometry()
+        except:
+            # If getFeature fails, try matching by attribute
+            for axis in axis_layer.getFeatures():
+                try:
+                    if axis[axis_id_field_name] == axis_id:
+                        axis_geom = axis.geometry()
+                        break
+                except KeyError:
+                    # If field doesn't exist, use feature ID
+                    if axis.id() == axis_id:
+                        axis_geom = axis.geometry()
+                        break
+        
+        # Make sure axis_id exists in extents, if not add it
+        if axis_id not in extents:
+            extents[axis_id] = [math.inf, -math.inf, math.inf, -math.inf]
+        
         value = extents[axis_id]
         if axis_geom != None:
             axis_length = axis_geom.length()
@@ -7099,7 +7147,9 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
     axisLayer = axis_layer
     
     # Check if axis_id field exists (read-only check, no iteration)
+    # Determine which field to use for axis identification
     has_axis_id = False
+    axis_id_field_name = 'axis_id'
     try:
         for field in axisLayer.fields():
             if field.name() == 'axis_id':
@@ -7110,7 +7160,9 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
         has_axis_id = True
     
     if not has_axis_id:
-        debug_print("Warning: axis_id field not found in axis layer - projection may fail")
+        debug_print("Warning: axis_id field not found in axis layer - using fid instead")
+        # Use fid as fallback when axis_id doesn't exist
+        axis_id_field_name = 'fid'
         # Do NOT try to add the field or modify the layer - this causes crashes in QGIS 3.44
 
     # Update progress bar
@@ -7163,17 +7215,129 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
     if type(buffersLayer) is str:
         buffersLayer = QgsVectorLayer(buffersLayer, 'buffers', 'memory')
 
+    # If axis_id doesn't exist in axis layer, we need to add it to buffers
+    # The buffer algorithm preserves attribute fields, but if axis_id doesn't exist,
+    # we need to create it by joining buffers back to the axis layer
+    if not has_axis_id:
+        debug_print("axis_id field not found - adding it to buffers layer by joining with axis layer...")
+        
+        # Check if buffers already have the field we need (from fid attribute)
+        buffer_has_field = False
+        try:
+            for field in buffersLayer.fields():
+                if field.name() == axis_id_field_name:
+                    buffer_has_field = True
+                    break
+        except:
+            pass
+        
+        if not buffer_has_field:
+            # Join buffers with axis layer to get original feature IDs
+            # We'll use a spatial join to match each buffer to its source axis feature
+            try:
+                # First, add a temporary field to axis layer with feature ID (if we can't modify, skip)
+                # Actually, we can't modify axis layer, so we'll use a different approach:
+                # Join buffers to axis layer spatially to get the original feature ID
+                # But we need the feature ID, not an attribute...
+                
+                # Alternative: Use join by location to copy all fields from axis, including any fid
+                # Then extract the feature ID using a field calculator with $id on axis layer first
+                # But we can't modify axis layer...
+                
+                # Best approach: Create a temporary copy of axis layer with axis_id field added
+                # Then join buffers to this temporary layer
+                try:
+                    # Create temporary axis layer with axis_id field
+                    temp_axis_params = {
+                        'INPUT': axisLayer,
+                        'OUTPUT': 'memory:temp_axis'
+                    }
+                    temp_axis = runProcessingAlg('native:fieldcalculator', {
+                        'FIELD_LENGTH': 10,
+                        'FIELD_NAME': 'axis_id',
+                        'FIELD_PRECISION': 0,
+                        'FIELD_TYPE': 1,
+                        'FORMULA': '$id',
+                        'INPUT': axisLayer,
+                        'OUTPUT': 'memory:temp_axis_with_id'
+                    })
+                    
+                    if type(temp_axis) is str:
+                        temp_axis = QgsVectorLayer(temp_axis, 'temp_axis_with_id', 'memory')
+                    
+                    if temp_axis is not None and temp_axis.isValid():
+                        # Join buffers to temp axis to get axis_id
+                        join_params = {
+                            'DISCARD_NONMATCHING': False,
+                            'INPUT': buffersLayer,
+                            'JOIN': temp_axis,
+                            'JOIN_FIELDS': ['axis_id'],
+                            'METHOD': 0,  # Create separate feature for each located feature
+                            'PREDICATE': [0],  # Intersects
+                            'OUTPUT': 'memory:buffers_with_id'
+                        }
+                        
+                        buffersWithId = runProcessingAlg('native:joinattributesbylocation', join_params)
+                        
+                        if type(buffersWithId) is str:
+                            buffersWithId = QgsVectorLayer(buffersWithId, 'buffers_with_id', 'memory')
+                        
+                        if buffersWithId is not None and buffersWithId.isValid():
+                            buffersLayer = buffersWithId
+                            axis_id_field_name = 'axis_id'
+                            debug_print("Successfully added axis_id field to buffers via spatial join")
+                        else:
+                            debug_print("Warning: Spatial join failed - buffers may not have axis_id")
+                    else:
+                        debug_print("Warning: Failed to create temp axis layer with axis_id")
+                except Exception as e:
+                    debug_print("Error in spatial join approach: " + str(e))
+                
+                if not buffer_has_field:
+                    debug_print("Warning: Field '" + axis_id_field_name + "' not found in buffers layer")
+                    debug_print("This may cause the projected_points layer to be empty")
+            except Exception as e:
+                debug_print("Error adding axis_id to buffers: " + str(e))
+                debug_print("Warning: Field '" + axis_id_field_name + "' not found in buffers layer")
+                debug_print("This may cause the projected_points layer to be empty")
+
     if progress_bar != None:
         progress_bar.setValue(50*progress_factor)
 
     # Join points with buffers
     debug_print("Joining points with buffers...")
+    
+    # Add buffer feature ID to join fields so we can use it later
+    # Buffer feature ID should match axis feature ID (buffers preserve order)
+    join_fields = [axis_id_field_name]
+    if not has_axis_id:
+        # When using fid, we also want to get the buffer's feature ID
+        # But joinattributesbylocation doesn't preserve feature IDs directly
+        # So we'll add a field with $id to buffers first
+        try:
+            calc_params = {
+                'FIELD_LENGTH': 10,
+                'FIELD_NAME': 'buffer_feature_id',
+                'FIELD_PRECISION': 0,
+                'FIELD_TYPE': 1,  # Integer
+                'FORMULA': '$id',
+                'INPUT': buffersLayer,
+                'OUTPUT': 'memory:buffers_with_fid'
+            }
+            buffersWithFid = runProcessingAlg('native:fieldcalculator', calc_params)
+            if type(buffersWithFid) is str:
+                buffersWithFid = QgsVectorLayer(buffersWithFid, 'buffers_with_fid', 'memory')
+            if buffersWithFid is not None and buffersWithFid.isValid():
+                buffersLayer = buffersWithFid
+                join_fields.append('buffer_feature_id')
+        except Exception as e:
+            debug_print("Warning: Could not add buffer_feature_id: " + str(e))
 
     parameters = {
         'DISCARD_NONMATCHING': True,
         'INPUT': pointsLayer,
         'JOIN': buffersLayer,
-        'JOIN_FIELDS' : ['axis_id'],
+        'JOIN_FIELDS' : join_fields,
         'METHOD': 0,
         'PREDICATE' : [0,1,4,5,6],
         'OUTPUT' : 'memory:filtered_points'
@@ -7196,6 +7360,22 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
             progress_bar.setValue(100*progress_factor)
         return [filteredPointsLayer, None] if not extremities else [filteredPointsLayer, None, None]
     
+    # Debug: Check if filtered points have the axis identifier field
+    try:
+        feature_count = 0
+        has_axis_id_count = 0
+        for feat in filteredPointsLayer.getFeatures():
+            feature_count += 1
+            try:
+                val = feat[axis_id_field_name]
+                if val is not None:
+                    has_axis_id_count += 1
+            except:
+                pass
+        debug_print("Filtered points: " + str(feature_count) + " features, " + str(has_axis_id_count) + " with " + axis_id_field_name)
+    except Exception as e:
+        debug_print("Could not check filtered points: " + str(e))
+    
     objectsToProjectLayer = filteredPointsLayer
 
     if objects_layer.geometryType() == QgsWkbTypes.PolygonGeometry:
@@ -7203,7 +7383,7 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
             # Join polygons with centroid
             parameters = {
                 'FIELD': 'fid',
-                'FIELDS TO COPY': ['axis_id'],
+                'FIELDS TO COPY': [axis_id_field_name],
                 'FIELD_2': 'fid',
                 'INPUT': objects_layer,
                 'INPUT_2': filteredPointsLayer,
@@ -7214,7 +7394,7 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
 
             # Delete polys with no axis ID
             parameters = {
-                'FIELD': 'axis_id',
+                'FIELD': axis_id_field_name,
                 'INPUT': popPolysLayer,
                 'OPERATOR': 9,
                 'VALUE': '',
@@ -7273,8 +7453,22 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
         debug_print("Warning: Could not add all fields: " + str(e))
         # Continue anyway - we'll add features with available fields
     
+    # Build a mapping from fid/axis_id values to axis feature IDs
+    # This avoids calling extractbyattribute for every point (which is very slow)
+    fid_to_feature_id_map = {}
+    if not has_axis_id and axis_id_field_name == 'fid':
+        # When using fid attribute, we need to map fid values to feature IDs
+        # Since we can't iterate through axis layer, we'll try getFeature first
+        # and if that fails, we'll build the map on-demand
+        debug_print("Building fid to feature ID mapping (on-demand)...")
+    else:
+        # When using axis_id, the values should match feature IDs directly
+        debug_print("Using axis_id values directly as feature IDs")
+    
     # Add projected points
     newFeatures = []
+    processed_count = 0
+    skipped_count = 0
     
     try:
         # Iterate through filtered points
@@ -7309,22 +7503,74 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
                 except Exception as e:
                     continue
                 
-                # Get axis_id
+                # Get axis identifier (axis_id or fid)
                 try:
-                    axis_id = point_feature['axis_id']
+                    axis_id = point_feature[axis_id_field_name]
                     if axis_id is None:
                         continue
-                except:
+                    # Convert to int if needed
+                    try:
+                        axis_id = int(axis_id)
+                    except:
+                        debug_print("Warning: axis_id value '" + str(axis_id) + "' cannot be converted to int")
+                        continue
+                except KeyError:
+                    # Field doesn't exist in point feature
+                    debug_print("Warning: Field '" + axis_id_field_name + "' not found in filtered point")
+                    continue
+                except Exception as e:
+                    debug_print("Error getting axis_id from point: " + str(e))
                     continue
                 
                 # Get axis geometry using getFeature() by ID (safe for QGIS 3.44)
+                # If axis_id_field_name is 'fid' (attribute field), the value might not match feature ID
+                # In that case, we use the buffer feature's own ID to get the axis feature
+                # (buffers preserve feature order, so buffer feature N corresponds to axis feature N)
                 axis_geom = None
+                axis_feat = None
+                is_valid = False
+                feature_id_to_use = axis_id  # Initialize with axis_id from point
                 try:
-                    axis_feat = axisLayer.getFeature(int(axis_id))
-                    try:
-                        is_valid = axis_feat.isValid()
-                    except:
-                        is_valid = axis_feat and hasattr(axis_feat, 'geometry')
+                    # Determine the actual feature ID to use
+                    
+                    # If using fid attribute and it's not in our map, try getFeature first
+                    # If that fails, use the point's own feature ID (which should match buffer feature ID)
+                    # Buffer feature ID should match original axis feature ID (buffers preserve order)
+                    if not has_axis_id and axis_id_field_name == 'fid':
+                        # First try: use fid value as feature ID
+                        axis_feat = axisLayer.getFeature(axis_id)
+                        try:
+                            is_valid = axis_feat.isValid()
+                        except:
+                            is_valid = axis_feat and hasattr(axis_feat, 'geometry')
+                        
+                        # If that failed, try using buffer_feature_id if available
+                        # (buffer feature ID should match axis feature ID since buffers preserve order)
+                        if not is_valid:
+                            try:
+                                buffer_feature_id = point_feature['buffer_feature_id']
+                                if buffer_feature_id is not None:
+                                    axis_feat = axisLayer.getFeature(int(buffer_feature_id))
+                                    try:
+                                        is_valid = axis_feat.isValid()
+                                    except:
+                                        is_valid = axis_feat and hasattr(axis_feat, 'geometry')
+                                    if is_valid:
+                                        feature_id_to_use = int(buffer_feature_id)
+                            except (KeyError, ValueError, TypeError):
+                                pass
+                    else:
+                        # Using axis_id - should match feature ID directly
+                        axis_feat = axisLayer.getFeature(axis_id)
+                        try:
+                            is_valid = axis_feat.isValid()
+                        except:
+                            is_valid = axis_feat and hasattr(axis_feat, 'geometry')
+                    
+                    if not is_valid:
+                        # Both methods failed - skip this point
+                        skipped_count += 1
+                        continue
                     
                     if is_valid:
                         try:
@@ -7396,7 +7642,9 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
                 # Create projected point feature
                 projectedPoint = QgsFeature(projectedPointsLayer.fields())
                 projectedPoint.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(projX, projY)))
-                projectedPoint.setAttribute('axis_id', axis_id)
+                # Store the actual feature ID used (not the fid attribute value)
+                # This ensures axis_id in projected points always matches axis feature IDs
+                projectedPoint.setAttribute('axis_id', feature_id_to_use)
                 
                 # Copy attributes from original point
                 for field in projectedPointsLayer.fields():
@@ -7412,13 +7660,18 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
                         pass
                 
                 newFeatures.append(projectedPoint)
+                processed_count += 1
                 
             except Exception as e:
+                skipped_count += 1
                 continue
         
         # Add features to layer
         if newFeatures:
             projectedPointsLayer.dataProvider().addFeatures(newFeatures)
+            debug_print("Added " + str(len(newFeatures)) + " projected points (" + str(processed_count) + " processed, " + str(skipped_count) + " skipped)")
+        else:
+            debug_print("No projected points created (" + str(skipped_count) + " points skipped)")
         
     except Exception as e:
         debug_print("Error in projection loop: " + str(e))
@@ -8603,41 +8856,41 @@ def populateComboBox(combobox, valueList):
     *************************************************************************** 
     """
 
-    debug_print("Starting function populateComboBox.")
+    # debug_print("Starting function populateComboBox.")
 
     """
     Check parameters
     """
 
-    debug_print("Checking parameters...")
+    # debug_print("Checking parameters...")
 
     # Check combo box parameter
 
     if combobox.__class__.__name__ != 'QComboBox':
-        debug_print("Invalid combo box parameter : not a combo box")
+        # debug_print("Invalid combo box parameter : not a combo box")
         return
 
     # Check value list parameter
 
     if type(valueList) is not list:
-        debug_print("Invalid value list parameter : not a list")
-        debug_print(valueList)
+        # debug_print("Invalid value list parameter : not a list")
+        # debug_print(valueList)
         return
 
     if len(valueList) < 1:
-        debug_print("Invalid value list parameter : empty list")
+        # debug_print("Invalid value list parameter : empty list")
         return
 
     for value in valueList:
         if type(value) is not str:
-            debug_print("Invalid value list parameter : not a list of chains of characters")
+            # debug_print("Invalid value list parameter : not a list of chains of characters")
             return
 
     """
     Adding items
     """
 
-    debug_print("Adding items...")
+    # debug_print("Adding items...")
 
     combobox.addItems(valueList)
 
@@ -8645,7 +8898,7 @@ def populateComboBox(combobox, valueList):
     Return success indicator
     """
 
-    debug_print("Combo box successfully populated!")
+    # debug_print("Combo box successfully populated!")
 
     return True
 
@@ -8664,18 +8917,18 @@ def setComboBoxIndex(combobox, value=None):
     *************************************************************************** 
     """
 
-    debug_print("Starting function setComboBoxIndex.")
+    # debug_print("Starting function setComboBoxIndex.")
 
     """
     Check parameters
     """
 
-    debug_print("Checking parameters...")
+    #     # debug_print("Checking parameters...")
 
     # Check combo box parameter
 
     if combobox.__class__.__name__ != 'QComboBox':
-        debug_print("Invalid combo box parameter : not a combo box")
+        # debug_print("Invalid combo box parameter : not a combo box")
         return
 
     # Check value parameter
@@ -8684,14 +8937,14 @@ def setComboBoxIndex(combobox, value=None):
         try:
             value = value.name()
         except:
-            debug_print("Invalid value parameter")
+            # debug_print("Invalid value parameter")
             return
 
     """
     Update combo box
     """
 
-    debug_print("Updating combo box...")
+    # debug_print("Updating combo box...")
 
     if value == None:
         combobox.setCurrentIndex(0)
@@ -8711,7 +8964,7 @@ def setComboBoxIndex(combobox, value=None):
     Return success indicator
     """
 
-    debug_print("Combo box successfully updated!")
+    # debug_print("Combo box successfully updated!")
 
     return True
 
@@ -8811,29 +9064,29 @@ def syncComboBoxes(comboBox, comboBoxes, value):
     *************************************************************************** 
     """
 
-    debug_print("Starting function syncComboBoxes.")
+    # debug_print("Starting function syncComboBoxes.")
 
     """
     Check parameters
     """
 
-    debug_print("Checking parameters...")
+    # debug_print("Checking parameters...")
 
     # Check combo box parameter
 
     if comboBox.__class__.__name__ != 'QComboBox':
-        debug_print("Invalid combo box parameter : not a combo box")
+        # debug_print("Invalid combo box parameter : not a combo box")
         return
 
     # Check combo boxes parameter
 
     if type(comboBoxes) is not list:
-        debug_print("Invalid combo boxes parameter : not a list")
+        # debug_print("Invalid combo boxes parameter : not a list")
         return
 
     for box in comboBoxes:
         if box.__class__.__name__ != 'QComboBox':
-            debug_print("Invalid combo boxes parameter : not a list of combo boxes")
+            # debug_print("Invalid combo boxes parameter : not a list of combo boxes")
             return
 
     # Check value parameter
@@ -8842,14 +9095,14 @@ def syncComboBoxes(comboBox, comboBoxes, value):
         try:
             value = value.name()
         except:
-            debug_print("Invalid value parameter")
+            # debug_print("Invalid value parameter")
             return
 
     """
     Update combo boxes
     """
 
-    debug_print("Updating combo boxes...")
+    # debug_print("Updating combo boxes...")
 
     for combo in comboBoxes:
         if combo != comboBox:
@@ -8862,7 +9115,7 @@ def syncComboBoxes(comboBox, comboBoxes, value):
     Return success indicator
     """
 
-    debug_print("Related combo boxes successfully synchronized!")
+    # debug_print("Related combo boxes successfully synchronized!")
 
     return True
 
@@ -8888,23 +9141,23 @@ def syncListViews(listView, listViews, valueList):
     Check parameters
     """
 
-    debug_print("Checking parameters...")
+    # debug_print("Checking parameters...")
 
     # Check list view parameter
 
     if listView.__class__.__name__ != 'QListView':
-        debug_print("Invalid combo box parameter : not a list view")
+        # debug_print("Invalid combo box parameter : not a list view")
         return
 
     # Check list views parameter
 
     if type(listViews) is not list:
-        debug_print("Invalid list views parameter : not a list")
+        # debug_print("Invalid list views parameter : not a list")
         return
 
     for view in listViews:
         if view.__class__.__name__ != 'QListView':
-            debug_print("Invalid list views parameter : not a list of list views")
+            # debug_print("Invalid list views parameter : not a list of list views")
             return
 
     # Check value list parameter
