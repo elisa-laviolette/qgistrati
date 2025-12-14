@@ -6795,6 +6795,10 @@ def createProfileGrid(profile, axis_layer, vertical_exaggeration = 1, interval =
         elif char == '0':
             count_zeros += 1
 
+    # Calculate the grid interval in exaggerated coordinate space
+    # Grid lines are spaced by interval * vertical_exaggeration
+    exaggerated_interval = interval * vertical_exaggeration
+
     for axis_id in extents.keys():
         
         value = extents[axis_id]
@@ -6805,6 +6809,8 @@ def createProfileGrid(profile, axis_layer, vertical_exaggeration = 1, interval =
         ymax = value[3]
 
         ## Round min and max values accordingly
+        ## Since ymin and ymax are in exaggerated coordinate space, we need to round
+        ## them to align with the grid spacing (interval * vertical_exaggeration)
 
         if count_zeros > 0:
             # rnd = round(xmin, count_zeros)
@@ -6819,17 +6825,16 @@ def createProfileGrid(profile, axis_layer, vertical_exaggeration = 1, interval =
             # else:
             #     xmax = rnd
 
-            rnd = round(ymin, count_zeros)
-            if rnd > ymin:
-                ymin = round(rnd - 1/(10*count_zeros), count_zeros)
-            else:
-                ymin = rnd
+            # Round ymin down to the nearest multiple of exaggerated_interval
+            # This ensures grid lines align with the projected points
+            ymin_rounded = math.floor(ymin / exaggerated_interval) * exaggerated_interval
+            # Apply additional rounding for display precision
+            ymin = round(ymin_rounded, count_zeros)
 
-            rnd = round(ymax, count_zeros)
-            if rnd < ymax:
-                ymax = round(rnd + 1/(10*count_zeros), count_zeros)
-            else:
-                ymax = rnd
+            # Round ymax up to the nearest multiple of exaggerated_interval
+            ymax_rounded = math.ceil(ymax / exaggerated_interval) * exaggerated_interval
+            # Apply additional rounding for display precision
+            ymax = round(ymax_rounded, count_zeros)
 
         extents[axis_id] = [xmin, xmax, ymin, ymax]
 
