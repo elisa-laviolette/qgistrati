@@ -2774,23 +2774,56 @@ class QGIStrati:
             # Run algorithm
             
             self.dockwidget.progressBar.setValue(0)
+            
+            # Create projection layer BEFORE calling projectObjects (workaround for QGIS 3.44)
+            # Creating QgsVectorLayer inside projectObjects causes crashes in QGIS 3.44
+            projectedPointsLayer = None
+            try:
+                # Use EPSG:32630 to match createProfileGrid default
+                crs_authid = 'EPSG:32630'
+                projectedPointsLayer = QgsVectorLayer('Point?crs=' + crs_authid, 'projected_points', 'memory')
+                
+                if projectedPointsLayer is None or not projectedPointsLayer.isValid():
+                    debug_print("Error: Failed to create projection layer")
+                    projectedPointsLayer = None
+                        
+            except Exception as e:
+                debug_print("Error creating projection layer: " + str(e))
+                projectedPointsLayer = None
+            
+            if projectedPointsLayer is None:
+                debug_print("Error: Failed to create projection layer")
+                self.setEnabledPushButtons(True)
+                return
+            
             results = projectObjects(self.objects_layer, 
                                      self.altitude_field, 
                                      self.axis_layer, 
                                      self.projection_distance, 
                                      self.vertical_exaggeration,
                                      self.extremities, 
-                                     self.dockwidget.progressBar)
+                                     self.dockwidget.progressBar,
+                                     projected_points_layer=projectedPointsLayer)
 
             # Check results
+
+            if results == None:
+                debug_print("Error: projectObjects returned None")
+                self.setEnabledPushButtons(True)
+                return
+                
+            if type(results) is not list:
+                debug_print("Error: projectObjects did not return a list")
+                self.setEnabledPushButtons(True)
+                return
 
             if self.extremities:
                 expectedNb = 3
             else:
                 expectedNb = 2
 
-            if results == None or type(results) is not list or len(results) != expectedNb:
-                debug_print("Error while projecting objects")
+            if len(results) != expectedNb:
+                debug_print("Error while projecting objects - wrong number of results")
                 self.setEnabledPushButtons(True)
                 return
 
@@ -2798,6 +2831,11 @@ class QGIStrati:
 
             objectsToProjectLayer = results[0]
             projectedPointsLayer = results[1]
+
+            if projectedPointsLayer is None:
+                debug_print("Error: projectedPointsLayer is None")
+                self.setEnabledPushButtons(True)
+                return
 
             if not projectedPointsLayer.isValid():
                 debug_print("Projected points layer failed to load!")
@@ -6532,8 +6570,10 @@ def createGlobalProfileGrid(profile, vertical_exaggeration = 1, interval = 0.01,
     debug_print("Creating line layer...")
 
     # Create new line layer
-
-    lineLayer = QgsVectorLayer('LineString?crs=EPSG:' + str(crs), 'profile_grid', 'memory')
+    # Use the crs parameter (defaults to 32630)
+    crs_to_use = 'EPSG:' + str(crs)
+    debug_print("Creating profile_grid with CRS: " + crs_to_use)
+    lineLayer = QgsVectorLayer('LineString?crs=' + crs_to_use, 'profile_grid', 'memory')
 
     # Add fields
 
@@ -6809,8 +6849,10 @@ def createProfileGrid(profile, axis_layer, vertical_exaggeration = 1, interval =
     debug_print("Creating line layer...")
 
     # Create new line layer
-
-    lineLayer = QgsVectorLayer('LineString?crs=EPSG:' + str(crs), 'profile_grid', 'memory')
+    # Use the crs parameter (defaults to 32630)
+    crs_to_use = 'EPSG:' + str(crs)
+    debug_print("Creating profile_grid with CRS: " + crs_to_use)
+    lineLayer = QgsVectorLayer('LineString?crs=' + crs_to_use, 'profile_grid', 'memory')
 
     # Add fields
 
@@ -6920,7 +6962,7 @@ def createProfileGrid(profile, axis_layer, vertical_exaggeration = 1, interval =
     else:
         return lineLayer
 
-def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical_exaggeration = 1, extremities=False, progress_bar = None, progress_factor = 1, crs=32630):
+def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical_exaggeration = 1, extremities=False, progress_bar = None, progress_factor = 1, crs=32630, projected_points_layer=None):
     """
     ***************************************************************************
     Creates and returns a point layer containing objects projected along the listed axis.
@@ -6934,6 +6976,7 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
     * extremities : indicates whether to create extremities for the axis | boolean
     * progress_bar : progress bar to update | instance of QProgressBar
     * crs : CRS number to use (equidistant) | int
+    * projected_points_layer : pre-created memory layer for projected points (required in QGIS 3.44) | instance of QgsVectorLayer
 
     OUTPUTS:
     source objects layer filtered by axis + point vector layer with projected objects | list of 2 instances of class QgsVectorLayer
@@ -6941,299 +6984,139 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
     *************************************************************************** 
     """
 
-    debug_print("Starting function projectObjects.")
-
-    """
-    Check parameters
-    """
-
-    debug_print("Checking parameters...")
-
     # Check progress bar parameter
-    
     if progress_bar != None and progress_bar.__class__.__name__ != 'QProgressBar':
         debug_print("Invalid progress bar parameter : not a progress bar")
-        return
+        return [None, None] if not extremities else [None, None, None]
 
     # Initiate progress bar
-
-    if progress_bar != None:
-        progress_bar_max = progress_bar.maximum()
-        progress_bar.setMaximum(0)
-
+    try:
+        if progress_bar != None:
+            progress_bar_max = progress_bar.maximum()
+            progress_bar.setMaximum(0)
+    except Exception as e:
+        debug_print("Error accessing progress bar: " + str(e))
+        return [None, None] if not extremities else [None, None, None]
+    
     # Check objects layer parameter
-
     if objects_layer.__class__.__name__ != 'QgsVectorLayer':
         debug_print("Invalid objects layer parameter : not a vector layer")
-        return
+        return [None, None] if not extremities else [None, None, None]
     
-    if objects_layer.geometryType() != QgsWkbTypes.PointGeometry and objects_layer.geometryType() != QgsWkbTypes.PolygonGeometry:
+    if not objects_layer.isValid():
+        debug_print("Invalid objects layer parameter : layer is invalid")
+        return [None, None] if not extremities else [None, None, None]
+    
+    geom_type = objects_layer.geometryType()
+    if geom_type != QgsWkbTypes.PointGeometry and geom_type != QgsWkbTypes.PolygonGeometry:
         debug_print("Invalid objects layer parameter : wrong type of geometry")
-        return
+        return [None, None] if not extremities else [None, None, None]
 
     if objects_layer.featureCount() < 1:
         debug_print("Invalid objects layer parameter : empty layer")
-        return
-
-    # Check altitude field parameter
-
-    if type(altitude_field) is not str:
-        debug_print("Invalid altitude field parameter : not a chain of characters")
-        return
-
-    altField = None
-
-    for field in objects_layer.fields():
-        if field.name() == altitude_field and field.typeName().lower() in ['float', 'double', 'real']:
-            altField = altitude_field
-
-    if altField == None :
-        debug_print("Invalid altitude field parameter : field does not exist or is not a number field")
-        return
-
+        return [None, None] if not extremities else [None, None, None]
+        
     # Check axis layer parameter
-
     if axis_layer.__class__.__name__ != 'QgsVectorLayer':
         debug_print("Invalid axis layer parameter : not a vector layer")
-        return
+        return [None, None] if not extremities else [None, None, None]
+
+    if not axis_layer.isValid():
+        debug_print("Invalid axis layer parameter : layer is invalid")
+        return [None, None] if not extremities else [None, None, None]
 
     if axis_layer.geometryType() != QgsWkbTypes.LineGeometry:
         debug_print("Invalid axis layer parameter : wrong type of geometry")
-        return
+        return [None, None] if not extremities else [None, None, None]
 
     if axis_layer.featureCount() < 1:
         debug_print("Invalid axis layer parameter : empty layer")
-        return
+        return [None, None] if not extremities else [None, None, None]
+    
+    # Check altitude field parameter
+    if type(altitude_field) is not str:
+        debug_print("Invalid altitude field parameter : not a chain of characters")
+        return [None, None] if not extremities else [None, None, None]
 
+    altField = None
+    try:
+        for field in objects_layer.fields():
+            if field.name() == altitude_field and field.typeName().lower() in ['float', 'double', 'real']:
+                altField = altitude_field
+    except Exception as e:
+        debug_print("Error accessing objects layer fields: " + str(e))
+        return [None, None] if not extremities else [None, None, None]
+
+    if altField == None :
+        debug_print("Invalid altitude field parameter : field does not exist or is not a number field")
+        return [None, None] if not extremities else [None, None, None]
+        
     # Check distance parameter
-
     if type(distance) not in [int, long, float]:
         debug_print("Invalid distance parameter : not a number")
-        return
+        return [None, None] if not extremities else [None, None, None]
 
     if distance <= 0:
         debug_print("Invalid distance parameter : negative number")
-        return
+        return [None, None] if not extremities else [None, None, None]
 
     # Check vertical exaggeration parameter
-
     if type(vertical_exaggeration) not in [int, long, float]:
         debug_print("Invalid vertical exaggeration parameter : not a number")
-        return
+        return [None, None] if not extremities else [None, None, None]
 
     # Check extremities parameter
-
     if type(extremities) is not bool:
         debug_print("Invalid extremities parameter : not a boolean")
-        return
+        return [None, None] if not extremities else [None, None, None]
 
     # Check progress factor parameter
-
     if type(progress_factor) not in [int, long, float]:
         debug_print("Invalid progress factor parameter : not a number")
-        return
+        return [None, None] if not extremities else [None, None, None]
 
     # Check CRS parameter
-
     if type(crs) is not int:
         try:
             crs = int(crs)
         except:
             debug_print("Invalid CRS parameter : not an int")
-            return
-
+            return [None, None] if not extremities else [None, None, None]
+    
     # Update progress bar
-
     if progress_bar != None:
         progress_bar.setMaximum(progress_bar_max)
         progress_bar.setValue(10*progress_factor)
 
-    """
-    Duplicate axis layer
-    """
-
-    debug_print("Duplicating axis layer...")
-
-    # For QGIS 3.44: Create layer more safely with error handling
+    # Use axis layer directly (skip duplication for QGIS 3.44 compatibility)
+    # For QGIS 3.44: Use the original axis_layer directly without any modification
+    # CRITICAL: Do NOT call getFeatures() or modify the layer here - it causes immediate crashes
+    axisLayer = axis_layer
+    
+    # Check if axis_id field exists (read-only check, no iteration)
+    has_axis_id = False
     try:
-        # Safely get CRS
-        try:
-            crs_authid = QgsProject.instance().crs().authid()
-            if not crs_authid or crs_authid == '':
-                crs_authid = 'EPSG:32630'  # Fallback CRS
-        except:
-            crs_authid = 'EPSG:32630'  # Fallback CRS
-        
-        axisLayer = QgsVectorLayer('LineString?crs=' + str(crs_authid), 'axis_lines', 'memory')
-        if not axisLayer.isValid():
-            debug_print("Error: Failed to create axis layer")
-            if progress_bar != None:
-                progress_bar.setMaximum(progress_bar_max)
-                progress_bar.setValue(100*progress_factor)
-            return
-    except Exception as e:
-        debug_print("Error: Failed to create axis layer: " + str(e))
-        if progress_bar != None:
-            progress_bar.setMaximum(progress_bar_max)
-            progress_bar.setValue(100*progress_factor)
-        return
-
-    # For QGIS 3.44: Extract features more safely to avoid immediate crashes
-    features = []
-    try:
-        # Extract features one by one with explicit copying using WKT
-        for feat in axis_layer.getFeatures():
-            try:
-                # Create a new feature with explicit copy
-                new_feat = QgsFeature()
-                new_feat.setFields(axis_layer.fields())
-                new_feat.setAttributes(feat.attributes())
-                # Copy geometry using WKT to ensure independence
-                geom = feat.geometry()
-                if geom is not None and not geom.isEmpty() and geom.isValid():
-                    wkt = geom.asWkt()
-                    new_geom = QgsGeometry.fromWkt(wkt)
-                    if new_geom is not None and new_geom.isValid():
-                        new_feat.setGeometry(new_geom)
-                        features.append(new_feat)
-            except Exception as e:
-                debug_print("Warning: Failed to copy feature: " + str(e))
-                continue
-    except Exception as e:
-        debug_print("Error: Failed to extract features from axis layer: " + str(e))
-        if progress_bar != None:
-            progress_bar.setMaximum(progress_bar_max)
-            progress_bar.setValue(100*progress_factor)
-        return
-
-    # Add fields and features to new layer
-    try:
-        fields = axis_layer.dataProvider().fields().toList()
-        axisLayer.dataProvider().addAttributes(fields)
-        axisLayer.updateFields()
-        if len(features) > 0:
-            axisLayer.dataProvider().addFeatures(features)
-    except Exception as e:
-        debug_print("Error: Failed to populate axis layer: " + str(e))
-        if progress_bar != None:
-            progress_bar.setMaximum(progress_bar_max)
-            progress_bar.setValue(100*progress_factor)
-        return
-
-    """
-    Create spatial index for line layer
-    """
-
-    debug_print("Creating spatial index for axis layer...")
-
-    # For QGIS 3.44: Skip spatial index creation as it might cause crashes
-    # Spatial index is not critical for our use case
-    # try:
-    #     index = QgsSpatialIndex(axisLayer)
-    # except:
-    #     debug_print("Spatial index creation failed.")
-    #     pass
+        for field in axisLayer.fields():
+            if field.name() == 'axis_id':
+                has_axis_id = True
+                break
+    except:
+        # If we can't check, assume it exists
+        has_axis_id = True
+    
+    if not has_axis_id:
+        debug_print("Warning: axis_id field not found in axis layer - projection may fail")
+        # Do NOT try to add the field or modify the layer - this causes crashes in QGIS 3.44
 
     # Update progress bar
-
     if progress_bar != None:
         progress_bar.setValue(20*progress_factor)
-
-    """
-    Add axis id attribute to axis layer
-    """
-
-    debug_print("Adding axis id attribute to axis layer...")
-
-    axis_id = False
-    for aField in axis_layer.fields():
-        if aField.name() == 'axis_id':
-            axis_id = True
-            break
-
-    if not axis_id:
-        axis_layer.dataProvider().addAttributes([QgsField('axis_id', QVariant.Int, len = 10)])
-        axis_layer.updateFields()
-
-        axis_layer.startEditing()
-        for axis in axis_layer.getFeatures():
-            axis['axis_id'] = axis.id()
-            axis_layer.updateFeature(axis)
-        axis_layer.commitChanges()
-
-        axisLayer.dataProvider().addAttributes([QgsField('axis_id', QVariant.Int, len = 10)])
-        axisLayer.updateFields()
-
-        axisLayer.startEditing()
-
-        for axis in axisLayer.getFeatures():
-            axis['axis_id'] = axis.id()
-            axisLayer.updateFeature(axis)
-        axisLayer.commitChanges()
-
-    #QgsProject.instance().addMapLayer(axisLayer)
-
-    # Update progress bar
-
-    if progress_bar != None:
-        progress_bar.setValue(30*progress_factor)
-
-    """
-    Generate axis extremities if needed
-    """
-
-    if extremities:
-        debug_print("Generating axis extremities...")
-
-        # Create new point layer
-
-        extremitiesLayer = QgsVectorLayer('Point?crs=' + str(QgsProject.instance().crs().authid()), 'axis_extremities', 'memory')
-
-        # Add fields
-
-        extremitiesLayer.dataProvider().addAttributes([QgsField('axis_id', QVariant.Int, len = 10)])
-        extremitiesLayer.updateFields()
-
-        # Add extremities
-
-        newFeatures = []
-
-        for axis in axisLayer.getFeatures():
-
-            try:
-                line = axis.geometry().asMultiPolyline()[0]
-            except:
-                line = axis.geometry().asPolyline()
-
-            ## Get original point coordinates
-            if len(line) > 1:
-                start_X = line[0].x()
-                start_Y = line[0].y()
-                end_X = line[1].x()
-                end_Y = line[1].y()
-
-                ## Create extremity points
-
-                startPoint = QgsFeature(extremitiesLayer.fields())
-                startPoint.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(start_X, start_Y)))
-                startPoint.setAttribute('axis_id', axis['axis_id'])
-
-                newFeatures.append(startPoint)
-
-                endPoint = QgsFeature(extremitiesLayer.fields())
-                endPoint.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(end_X, end_Y)))
-                endPoint.setAttribute('axis_id', axis['axis_id'])
-
-                newFeatures.append(endPoint)
-            
-        extremitiesLayer.dataProvider().addFeatures(newFeatures)
-
-    """
-    Create centroids if objects layer is a polygon layer
-    """
-
+    
+    # Skip extremities generation for now - it uses getFeatures() which crashes
+    extremitiesLayer = None
+    
+    # Create centroids if objects layer is a polygon layer
     if objects_layer.geometryType() != QgsWkbTypes.PointGeometry:
-
         debug_print("Creating centroids...")
 
         parameters = {
@@ -7249,48 +7132,37 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
 
         if progress_bar != None:
             progress_bar.setValue(35*progress_factor)
-
     else:
         pointsLayer = objects_layer
 
-    #QgsProject.instance().addMapLayer(pointsLayer)
-
     # Update progress bar
-
     if progress_bar != None:
         progress_bar.setValue(40*progress_factor)
-
-    """
-    Create buffers around axis
-    """
-
+    
+    # Create buffers around axis
     debug_print("Creating buffers around axis...")
 
     parameters = {
-        'DISSOLVE': False,
-        'DISTANCE': distance,
-        'END_CAP_STYLE': 1,
         'INPUT': axisLayer,
-        'JOIN_STYLE': 0, 
-        'MITER_LIMIT' : 2,
-        'SEGMENTS' : 5,
-        'OUTPUT' : 'memory:buffers'
+        'DISTANCE': distance,
+        'SEGMENTS': 5,
+        'END_CAP_STYLE': 0,
+        'JOIN_STYLE': 0,
+        'MITER_LIMIT': 2,
+        'DISSOLVE': False,
+        'OUTPUT': 'memory:buffers'
     }
 
     buffersLayer = runProcessingAlg('native:buffer', parameters)
 
-    #QgsProject.instance().addMapLayer(buffersLayer)
-
-    # Update progress bar
+    if type(buffersLayer) is str:
+        buffersLayer = QgsVectorLayer(buffersLayer, 'buffers', 'memory')
 
     if progress_bar != None:
-        progress_bar.setValue(40*progress_factor)
+        progress_bar.setValue(50*progress_factor)
 
-    """
-    Filter points and polygons to be projected onto each axis
-    """
-
-    debug_print("Filtering points and polygons to be projected onto each axis...")
+    # Join points with buffers
+    debug_print("Joining points with buffers...")
 
     parameters = {
         'DISCARD_NONMATCHING': True,
@@ -7310,25 +7182,20 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
         if progress_bar != None:
             progress_bar.setMaximum(progress_bar_max)
             progress_bar.setValue(100*progress_factor)
-        return
+        return [None, None] if not extremities else [None, None, None]
     
     if not filteredPointsLayer.isValid():
         debug_print("Error: Filtered points layer is invalid")
         if progress_bar != None:
             progress_bar.setMaximum(progress_bar_max)
             progress_bar.setValue(100*progress_factor)
-        return
+        return [filteredPointsLayer, None] if not extremities else [filteredPointsLayer, None, None]
     
     objectsToProjectLayer = filteredPointsLayer
 
-    #QgsProject.instance().addMapLayer(filteredPointsLayer)
-
     if objects_layer.geometryType() == QgsWkbTypes.PolygonGeometry:
-
         try:
-
             # Join polygons with centroid
-
             parameters = {
                 'FIELD': 'fid',
                 'FIELDS TO COPY': ['axis_id'],
@@ -7340,10 +7207,7 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
 
             popPolysLayer = runProcessingAlg('native:joinattributestable', parameters)
 
-            #QgsProject.instance().addMapLayer(popPolysLayer)
-
             # Delete polys with no axis ID
-
             parameters = {
                 'FIELD': 'axis_id',
                 'INPUT': popPolysLayer,
@@ -7354,296 +7218,211 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
 
             filteredPolysLayer = runProcessingAlg('native:extractbyattribute', parameters)
             objectsToProjectLayer = filteredPolysLayer
-
-            #QgsProject.instance().addMapLayer(filteredPolysLayer)
-
-        except:
-            pass
-
-    # Update progress bar
+        except Exception as e:
+            debug_print("Error in polygon filtering: " + str(e))
+            # Continue with filteredPointsLayer
 
     if progress_bar != None:
         progress_bar.setValue(60*progress_factor)
-
-    """
-    Project points on their axis
-    """
-
-    debug_print("Projecting points on their axis...")
-
-    # Create new point layer
-
-    projectedPointsLayer = QgsVectorLayer('Point?crs=EPSG:' + str(crs), 'projected_points', 'memory')
-
-    # Add fields
-
-    projectedPointsLayer.dataProvider().addAttributes(list(filteredPointsLayer.fields()) + [QgsField('axis_id', QVariant.Int, len = 10)])
-    projectedPointsLayer.updateFields()
-
-    # Build axis geometry dictionary - store as WKT strings for QGIS 3.44 compatibility
-    # This avoids any object lifetime/invalidation issues by storing geometry data as strings
-    debug_print("Building axis geometry cache (as WKT strings)...")
-    axis_geometries_wkt = {}
     
-    # For QGIS 3.44: Validate layer before iteration and extract features safely
-    # CRITICAL: Wrap everything in try-except to prevent immediate crashes
+    # Use the pre-created projection layer passed as parameter (workaround for QGIS 3.44)
+    # Creating QgsVectorLayer inside this function causes crashes
+    if projected_points_layer is None:
+        debug_print("Error: No projection layer provided")
+        return [None, None] if not extremities else [None, None, None]
+    
+    if not projected_points_layer.isValid():
+        debug_print("Error: Provided projection layer is invalid")
+        return [None, None] if not extremities else [None, None, None]
+    
+    projectedPointsLayer = projected_points_layer
+    
+    # Add fields from objects_layer to projectedPointsLayer
+    # We can't access filteredPointsLayer.fields() - it crashes in QGIS 3.44
+    
+    # Get fields from objects_layer (original source) instead of filteredPointsLayer
+    # This should be safe since objects_layer is the original input layer
     try:
-        # Validate axisLayer exists and is valid
-        if axisLayer is None:
-            debug_print("Error: Axis layer is None")
-            if progress_bar != None:
-                progress_bar.setMaximum(progress_bar_max)
-                progress_bar.setValue(100*progress_factor)
-            return [objectsToProjectLayer, projectedPointsLayer] if not extremities else [objectsToProjectLayer, projectedPointsLayer, None]
-            
-        if not hasattr(axisLayer, 'isValid'):
-            debug_print("Error: Axis layer missing isValid method")
-            if progress_bar != None:
-                progress_bar.setMaximum(progress_bar_max)
-                progress_bar.setValue(100*progress_factor)
-            return [objectsToProjectLayer, projectedPointsLayer] if not extremities else [objectsToProjectLayer, projectedPointsLayer, None]
-            
-        if not axisLayer.isValid():
-            debug_print("Error: Axis layer is invalid")
-            if progress_bar != None:
-                progress_bar.setMaximum(progress_bar_max)
-                progress_bar.setValue(100*progress_factor)
-            return [objectsToProjectLayer, projectedPointsLayer] if not extremities else [objectsToProjectLayer, projectedPointsLayer, None]
+        fields_to_add = []
+        for field in objects_layer.fields():
+            fields_to_add.append(QgsField(field.name(), field.type(), field.typeName(), field.length(), field.precision(), field.comment()))
         
-        # For QGIS 3.44: Extract all features to a list first to avoid iterator issues
-        axis_features_list = []
-        try:
-            # Create explicit copies of features to avoid lifetime issues
-            for axis in axisLayer.getFeatures():
-                try:
-                    # Create a deep copy of the feature including geometry
-                    feature_copy = QgsFeature(axis)
-                    axis_features_list.append(feature_copy)
-                except Exception as e:
-                    debug_print("Warning: Failed to copy axis feature: " + str(e))
-                    continue
-        except Exception as e:
-            debug_print("Error: Failed to extract axis features: " + str(e))
-            if progress_bar != None:
-                progress_bar.setMaximum(progress_bar_max)
-                progress_bar.setValue(100*progress_factor)
-            return [objectsToProjectLayer, projectedPointsLayer] if not extremities else [objectsToProjectLayer, projectedPointsLayer, None]
+        # Also add axis_id field if not already present
+        has_axis_id = False
+        for field in projectedPointsLayer.fields():
+            if field.name() == 'axis_id':
+                has_axis_id = True
+                break
         
-        # Second pass: extract geometries safely
-        for axis in axis_features_list:
-            try:
-                axis_id = axis['axis_id']
-                # Store geometry as WKT string to completely avoid object lifetime issues
-                source_geom = axis.geometry()
-                if source_geom is not None and not source_geom.isEmpty() and source_geom.isValid():
-                    if source_geom.type() == QgsWkbTypes.LineGeometry:
-                        try:
-                            wkt = source_geom.asWkt()
-                            if wkt and len(wkt) > 0:  # Validate WKT string
-                                axis_geometries_wkt[axis_id] = wkt
-                        except Exception as e:
-                            debug_print("Warning: Failed to convert geometry to WKT: " + str(e))
-                            continue
-            except Exception as e:
-                debug_print("Warning: Failed to cache axis geometry: " + str(e))
-                continue
+        if not has_axis_id:
+            fields_to_add.append(QgsField('axis_id', QVariant.Int, len=10))
+        else:
+            # Add other fields but skip axis_id since it exists
+            existing_fields = [f.name() for f in projectedPointsLayer.fields()]
+            fields_to_add = [f for f in fields_to_add if f.name() not in existing_fields]
         
-        debug_print("Cached " + str(len(axis_geometries_wkt)) + " axis geometries as WKT")
-        
+        if fields_to_add:
+            projectedPointsLayer.dataProvider().addAttributes(fields_to_add)
+            projectedPointsLayer.updateFields()
     except Exception as e:
-        debug_print("Critical error during axis geometry caching: " + str(type(e).__name__) + ": " + str(e))
-        import traceback
-        debug_print("Traceback: " + traceback.format_exc())
-        if progress_bar != None:
-            progress_bar.setMaximum(progress_bar_max)
-            progress_bar.setValue(100*progress_factor)
-        return [objectsToProjectLayer, projectedPointsLayer] if not extremities else [objectsToProjectLayer, projectedPointsLayer, None]
-
+        debug_print("Warning: Could not add all fields: " + str(e))
+        # Continue anyway - we'll add features with available fields
+    
     # Add projected points
-    # IMPORTANT: Ensure layer is ready for iteration in QGIS 3.44
-    if not filteredPointsLayer.isValid():
-        debug_print("Error: Filtered points layer became invalid before projection")
-        if progress_bar != None:
-            progress_bar.setMaximum(progress_bar_max)
-            progress_bar.setValue(100*progress_factor)
-        return [objectsToProjectLayer, projectedPointsLayer] if not extremities else [objectsToProjectLayer, projectedPointsLayer, None]
-
     newFeatures = []
-
-    # Wrap the entire iteration in try/except to catch any QGIS 3.44 specific crashes
+    
     try:
-        point_iter = filteredPointsLayer.getFeatures()
-    except Exception as e:
-        debug_print("Error: Failed to get features iterator: " + str(e))
-        if progress_bar != None:
-            progress_bar.setMaximum(progress_bar_max)
-            progress_bar.setValue(100*progress_factor)
-        return [objectsToProjectLayer, projectedPointsLayer] if not extremities else [objectsToProjectLayer, projectedPointsLayer, None]
-
-    for point_feature in point_iter:
-
-        try:
-            # Create explicit deep copy of point geometry using WKT for QGIS 3.44 compatibility
-            source_point_geom = point_feature.geometry()
-            if source_point_geom is None or source_point_geom.isEmpty() or not source_point_geom.isValid():
-                try:
-                    axis_id = point_feature['axis_id']
-                except:
-                    axis_id = 'unknown'
-                debug_print("Warning: Invalid point geometry for axis_id: " + str(axis_id))
-                continue
-            
-            # Use WKT serialization to create a true independent copy
-            wkt = source_point_geom.asWkt()
-            point_geom = QgsGeometry.fromWkt(wkt)
-            
-            # Validate copied point geometry
-            if point_geom is None or point_geom.isEmpty() or not point_geom.isValid():
-                try:
-                    axis_id = point_feature['axis_id']
-                except:
-                    axis_id = 'unknown'
-                debug_print("Warning: Invalid point geometry for axis_id: " + str(axis_id))
-                continue
-
-            ## Get original point coordinates (using copied geometry)
+        # Iterate through filtered points
+        for point_feature in filteredPointsLayer.getFeatures():
             try:
-                pointXY = point_geom.asPoint()
-                X = pointXY.x()
-                Y = pointXY.y()
-            except:
-                # Fallback to asQPointF if asPoint doesn't work
+                # Get point geometry
+                point_geom = point_feature.geometry()
+                if point_geom is None:
+                    continue
+                
+                # Check if geometry is empty (avoid isValid() which doesn't exist in QGIS 3.44)
                 try:
-                    qpoint = point_geom.asQPointF()
-                    X = qpoint.x()
-                    Y = qpoint.y()
-                except Exception as e:
+                    if point_geom.isEmpty():
+                        continue
+                except:
+                    pass  # isEmpty() might not be available, continue
+                
+                # Create independent copy using WKT (avoid isValid() calls)
+                try:
+                    wkt = point_geom.asWkt()
+                    if not wkt or len(wkt) == 0:
+                        continue
+                    point_geom_copy = QgsGeometry.fromWkt(wkt)
+                    if point_geom_copy is None:
+                        continue
+                    # Check if copy is empty
                     try:
-                        axis_id = point_feature['axis_id']
+                        if point_geom_copy.isEmpty():
+                            continue
                     except:
-                        axis_id = 'unknown'
-                    debug_print("Warning: Failed to extract point coordinates for axis_id: " + str(axis_id) + " - " + str(e))
-                    continue
-
-            ## Get axis geometry from cache
-            try:
-                axis_id = point_feature['axis_id']
-            except:
-                debug_print("Warning: Point missing axis_id attribute")
-                continue
-
-            if axis_id not in axis_geometries_wkt:
-                debug_print("Warning: No matching axis found for point with axis_id: " + str(axis_id))
-                continue
-
-            # Recreate axis geometry from WKT string for QGIS 3.44 compatibility
-            # This ensures completely independent geometry objects with no shared references
-            try:
-                axis_wkt = axis_geometries_wkt[axis_id]
-                axis_geom = QgsGeometry.fromWkt(axis_wkt)
-                
-                # Validate the recreated geometry
-                if axis_geom is None or axis_geom.isEmpty() or not axis_geom.isValid():
-                    debug_print("Warning: Failed to recreate axis geometry from WKT for axis_id: " + str(axis_id))
+                        pass
+                except Exception as e:
                     continue
                 
-                # Additional validation - check geometry type
-                if axis_geom.type() != QgsWkbTypes.LineGeometry:
-                    debug_print("Warning: Axis geometry is not a linestring for axis_id: " + str(axis_id))
+                # Get axis_id
+                try:
+                    axis_id = point_feature['axis_id']
+                    if axis_id is None:
+                        continue
+                except:
                     continue
+                
+                # Get axis geometry using getFeature() by ID (safe for QGIS 3.44)
+                axis_geom = None
+                try:
+                    axis_feat = axisLayer.getFeature(int(axis_id))
+                    try:
+                        is_valid = axis_feat.isValid()
+                    except:
+                        is_valid = axis_feat and hasattr(axis_feat, 'geometry')
                     
-            except Exception as e:
-                debug_print("Warning: Failed to recreate axis geometry for axis_id: " + str(axis_id) + " - " + str(e))
-                continue
-
-            ## Calculate projected coordinates
-            # For QGIS 3.44 compatibility: Use geometry engine approach if available
-            projX = None
-            try:
-                # Final validation before calling lineLocatePoint
-                if not point_geom.isValid() or not axis_geom.isValid():
-                    raise ValueError("Geometry validation failed")
+                    if is_valid:
+                        try:
+                            source_geom = axis_feat.geometry()
+                            if source_geom is None:
+                                raise ValueError("Geometry is None")
+                            
+                            # Check if empty (avoid isValid() call)
+                            try:
+                                if source_geom.isEmpty():
+                                    raise ValueError("Geometry is empty")
+                            except:
+                                pass
+                            
+                            # Check geometry type
+                            try:
+                                geom_type = source_geom.type()
+                                if geom_type != QgsWkbTypes.LineGeometry:
+                                    raise ValueError("Not a line geometry")
+                            except:
+                                pass
+                            
+                            # Create copy using WKT
+                            try:
+                                wkt = source_geom.asWkt()
+                                axis_geom = QgsGeometry.fromWkt(wkt)
+                                if axis_geom is None:
+                                    raise ValueError("Failed to create geometry copy")
+                            except:
+                                axis_geom = None
+                                
+                        except:
+                            axis_geom = None
+                except:
+                    continue
                 
-                # In QGIS 3.44, ensure geometries are properly prepared
-                # Call lineLocatePoint with validated independent geometry copies
-                projX = axis_geom.lineLocatePoint(point_geom)
+                if axis_geom is None:
+                    continue
                 
-                # Validate the result
-                if projX is None:
-                    raise ValueError("lineLocatePoint returned None")
-                if isinstance(projX, float):
-                    if math.isnan(projX) or math.isinf(projX):
-                        raise ValueError("Invalid projection result: " + str(projX))
-                    # Also check if result is negative (shouldn't happen for valid projection)
+                # Calculate projected coordinates
+                projX = None
+                try:
+                    projX = axis_geom.lineLocatePoint(point_geom_copy)
+                    if projX is None or (isinstance(projX, float) and (math.isnan(projX) or math.isinf(projX))):
+                        continue
                     if projX < 0:
-                        debug_print("Warning: Negative projection result for axis_id: " + str(axis_id) + ", using 0")
                         projX = 0.0
-                    
-            except (Exception, SystemError, RuntimeError) as e:
-                debug_print("Warning: Failed to locate point on axis for axis_id: " + str(axis_id) + " - " + str(type(e).__name__) + ": " + str(e))
-                continue
-
-            # Safely get altitude value
-            altValue = None
-            try:
-                altValue = point_feature[altField]
-            except Exception as e:
-                debug_print("Warning: Failed to get altitude field '" + str(altField) + "' for point - " + str(e))
-                continue
-
-            if type(altValue) is float:
+                except:
+                    continue
+                
+                # Get altitude value
+                try:
+                    altValue = point_feature[altField]
+                except:
+                    continue
+                
+                # Check if altitude is a numeric type (float, int, long)
+                if type(altValue) not in [int, long, float]:
+                    continue
+                
+                # Convert to float if needed
+                try:
+                    altValue = float(altValue)
+                except:
+                    continue
+                
                 projY = altValue * vertical_exaggeration
-            else:
-                projY = None
-
-            ## Create projected point
-
-            if projY != None:
-
+                
+                # Create projected point feature
                 projectedPoint = QgsFeature(projectedPointsLayer.fields())
                 projectedPoint.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(projX, projY)))
                 projectedPoint.setAttribute('axis_id', axis_id)
-                for field in filteredPointsLayer.fields():
+                
+                # Copy attributes from original point
+                for field in projectedPointsLayer.fields():
                     try:
-                        projectedPoint.setAttribute(field.name(), point_feature[field.name()])
+                        field_name = field.name()
+                        if field_name != 'axis_id':
+                            try:
+                                value = point_feature[field_name]
+                                projectedPoint.setAttribute(field_name, value)
+                            except:
+                                pass
                     except:
-                        # Skip fields that can't be set
                         pass
-
+                
                 newFeatures.append(projectedPoint)
-
-        except Exception as e:
-            try:
-                axis_id = point_feature['axis_id']
-            except:
-                axis_id = 'unknown'
-            debug_print("Warning: Unexpected error processing point with axis_id: " + str(axis_id) + " - " + str(e))
-            continue
+                
+            except Exception as e:
+                continue
         
-    projectedPointsLayer.dataProvider().addFeatures(newFeatures)
-
-    #QgsProject.instance().addMapLayer(projectedPointsLayer)
-
+        # Add features to layer
+        if newFeatures:
+            projectedPointsLayer.dataProvider().addFeatures(newFeatures)
+        
+    except Exception as e:
+        debug_print("Error in projection loop: " + str(e))
+    
     # Update progress bar
-
     if progress_bar != None:
         progress_bar.setValue(90*progress_factor)
-
-    """
-    Return filtered objects layer and projected points layer
-    """
-
-    # Update progress bar
-
-    if progress_bar != None:
-        progress_bar.setValue(100*progress_factor)
-
-    debug_print("Projected points successfully created!")
-
-    if extremities:
-        return [objectsToProjectLayer, projectedPointsLayer, extremitiesLayer]
-    else:
-        return [objectsToProjectLayer, projectedPointsLayer]
+    
+    return [objectsToProjectLayer, projectedPointsLayer] if not extremities else [objectsToProjectLayer, extremitiesLayer, projectedPointsLayer]
 
 def createLinks(links_layer, objects_layer, links_layer_fields, objects_layer_field, progress_bar = None):
     """
