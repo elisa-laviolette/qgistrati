@@ -2631,11 +2631,14 @@ class QGIStrati:
         if self.objects_layer != None:
             self.objectLayerNumericFields = listNumericFields(self.objects_layer)
             self.objectLayerNumericFieldNames = listFieldNames(self.objectLayerNumericFields)
+        else:
+            self.objectLayerNumericFields = []
+            self.objectLayerNumericFieldNames = []
 
         ## Add items
 
         fieldComboBox.clear()
-        if self.objectLayerNumericFieldNames != None and len(self.polygonAndPointLayerNames) > 0:
+        if self.objectLayerNumericFieldNames != None and len(self.objectLayerNumericFieldNames) > 0:
             fieldComboBox.addItems(self.objectLayerNumericFieldNames)
 
         ## Set default value
@@ -2864,6 +2867,12 @@ class QGIStrati:
             if self.object_projection_grid:
 
                 self.dockwidget.progressBar.setValue(0)
+                if projectedPointsLayer.featureCount() < 1:
+                    debug_print("Error: projected points layer is empty; cannot create profile grid. "
+                                "If your axis layer has no 'axis_id' field, the plugin uses buffer feature IDs; "
+                                "if you still get no projected points, check that objects fall within the projection distance of the axis.")
+                    self.setEnabledPushButtons(True)
+                    return
                 results = createProfileGrid(projectedPointsLayer, self.axis_layer, self.vertical_exaggeration, self.grid_interval, self.extremities, self.dockwidget.progressBar)
 
                 # Check results
@@ -3317,6 +3326,9 @@ class QGIStrati:
         if self.objects_layer != None:
             self.objectLayerNumericFields = listNumericFields(self.objects_layer)
             self.objectLayerNumericFieldNames = listFieldNames(self.objectLayerNumericFields)
+        else:
+            self.objectLayerNumericFields = []
+            self.objectLayerNumericFieldNames = []
 
         ## Add items
 
@@ -4549,16 +4561,24 @@ class QGIStrati:
 ### FUNCTIONS ###
 #################
 
+# Numeric field type names accepted for altitude/numeric fields (QGIS/PostgreSQL/memory providers).
+NUMERIC_FIELD_TYPE_NAMES = [
+    'float', 'double', 'real',
+    'numeric', 'decimal',
+    'float4', 'float8',
+    'double precision'
+]
+
 def listFieldNames(fields):
     """
     ***************************************************************************
     Returns list of field names in alphabetical order.
 
     PARAMETERS:
-    * fields : list of fields | list of instances of QgsField
+    * fields : list of fields | list of instances of QgsField (empty list allowed)
 
     OUTPUTS:
-    list of names | list of strings
+    list of names | list of strings (returns [] when fields is empty or invalid)
    
     *************************************************************************** 
     """
@@ -4574,8 +4594,7 @@ def listFieldNames(fields):
         return
 
     if len(fields) < 1:
-        debug_print("Invalid fields parameter : empty list")
-        return
+        return []
 
     for field in fields:
         if field.__class__.__name__ != 'QgsField':
@@ -4624,7 +4643,7 @@ def listNumericFields(layer):
     fields = []
 
     for field in layer.fields():
-        if field.typeName().lower() in ['float', 'double', 'real']:
+        if field.typeName().lower() in NUMERIC_FIELD_TYPE_NAMES:
             fields.append(field)
 
     return fields
@@ -4978,7 +4997,7 @@ def createDEM(topo_layer, altitude_field, extent, distance, filter_expression = 
     altField = None
 
     for field in topo_layer.fields():
-        if field.name() == altitude_field and field.typeName().lower() in ['float', 'double', 'real']:
+        if field.name() == altitude_field and field.typeName().lower() in NUMERIC_FIELD_TYPE_NAMES:
             altField = altitude_field
 
     if altField == None :
@@ -6687,46 +6706,73 @@ def createProfileGrid(profile, axis_layer, vertical_exaggeration = 1, interval =
 
     if profile.__class__.__name__ != 'QgsVectorLayer':
         debug_print("Invalid profiles parameter : not a vector layer")
+        if progress_bar is not None:
+            progress_bar.setMaximum(progress_bar_max)
+            progress_bar.setValue(0)
         return
 
     if profile.geometryType() != QgsWkbTypes.LineGeometry and profile.geometryType() != QgsWkbTypes.PointGeometry:
         debug_print("Invalid profiles parameter : wrong type of geometry")
+        if progress_bar is not None:
+            progress_bar.setMaximum(progress_bar_max)
+            progress_bar.setValue(0)
         return
 
     if profile.featureCount() < 1:
         debug_print("Invalid profiles parameter : empty layer")
+        if progress_bar is not None:
+            progress_bar.setMaximum(progress_bar_max)
+            progress_bar.setValue(0)
         return
 
     # Check axis layer parameter
 
     if axis_layer.__class__.__name__ != 'QgsVectorLayer':
         debug_print("Invalid axis layer parameter : not a vector layer")
+        if progress_bar is not None:
+            progress_bar.setMaximum(progress_bar_max)
+            progress_bar.setValue(0)
         return
 
     if axis_layer.geometryType() != QgsWkbTypes.LineGeometry:
         debug_print("Invalid axis layer parameter : wrong type of geometry")
+        if progress_bar is not None:
+            progress_bar.setMaximum(progress_bar_max)
+            progress_bar.setValue(0)
         return
 
     if axis_layer.featureCount() < 1:
         debug_print("Invalid axis layer parameter : empty layer")
+        if progress_bar is not None:
+            progress_bar.setMaximum(progress_bar_max)
+            progress_bar.setValue(0)
         return
 
     # Check vertical exaggeration parameter
 
     if type(vertical_exaggeration) not in [int, long, float]:
         debug_print("Invalid vertical exaggeration parameter : not a number")
+        if progress_bar is not None:
+            progress_bar.setMaximum(progress_bar_max)
+            progress_bar.setValue(0)
         return
 
     # Check interval parameter
 
     if type(interval) not in [int, long, float]:
         debug_print("Invalid interval parameter : not a number")
+        if progress_bar is not None:
+            progress_bar.setMaximum(progress_bar_max)
+            progress_bar.setValue(0)
         return
 
     # Check extremities parameter
 
     if type(extremities) is not bool:
         debug_print("Invalid extremities parameter : not a boolean")
+        if progress_bar is not None:
+            progress_bar.setMaximum(progress_bar_max)
+            progress_bar.setValue(0)
         return
 
     # Check CRS parameter
@@ -6736,6 +6782,9 @@ def createProfileGrid(profile, axis_layer, vertical_exaggeration = 1, interval =
             crs = int(crs)
         except:
             debug_print("Invalid CRS parameter : not an int")
+            if progress_bar is not None:
+                progress_bar.setMaximum(progress_bar_max)
+                progress_bar.setValue(0)
             return
 
     # Update progress bar
@@ -7111,7 +7160,7 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
     altField = None
     try:
         for field in objects_layer.fields():
-            if field.name() == altitude_field and field.typeName().lower() in ['float', 'double', 'real']:
+            if field.name() == altitude_field and field.typeName().lower() in NUMERIC_FIELD_TYPE_NAMES:
                 altField = altitude_field
     except Exception as e:
         debug_print("Error accessing objects layer fields: " + str(e))
@@ -7347,6 +7396,8 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
             if buffersWithFid is not None and buffersWithFid.isValid():
                 buffersLayer = buffersWithFid
                 join_fields.append('buffer_feature_id')
+                # Use buffer_feature_id as axis identifier (buffer feature N = axis feature N)
+                axis_id_field_name = 'buffer_feature_id'
         except Exception as e:
             debug_print("Warning: Could not add buffer_feature_id: " + str(e))
 
@@ -7470,17 +7521,26 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
         debug_print("Warning: Could not add all fields: " + str(e))
         # Continue anyway - we'll add features with available fields
     
-    # Build a mapping from fid/axis_id values to axis feature IDs
-    # This avoids calling extractbyattribute for every point (which is very slow)
-    fid_to_feature_id_map = {}
-    if not has_axis_id and axis_id_field_name == 'fid':
-        # When using fid attribute, we need to map fid values to feature IDs
-        # Since we can't iterate through axis layer, we'll try getFeature first
-        # and if that fails, we'll build the map on-demand
+    # Build a mapping from axis_id attribute values to axis feature IDs.
+    # axis_id in the data is often not the same as QGIS feature ID (e.g. user values 1,2,3 vs FIDs 0,1,2).
+    axis_id_attr_to_fid = {}
+    if has_axis_id:
+        try:
+            for feat in axisLayer.getFeatures():
+                try:
+                    attr_val = feat[axis_id_field_name]
+                    if attr_val is not None:
+                        axis_id_attr_to_fid[int(attr_val)] = feat.id()
+                except (KeyError, TypeError, ValueError):
+                    pass
+            if axis_id_attr_to_fid:
+                debug_print("Built axis_id attribute -> feature ID map: " + str(len(axis_id_attr_to_fid)) + " axis features")
+            else:
+                debug_print("Warning: axis_id map is empty")
+        except Exception as e:
+            debug_print("Warning: Could not build axis_id map (" + str(e) + ")")
+    elif not has_axis_id and axis_id_field_name == 'fid':
         debug_print("Building fid to feature ID mapping (on-demand)...")
-    else:
-        # When using axis_id, the values should match feature IDs directly
-        debug_print("Using axis_id values directly as feature IDs")
     
     # Add projected points
     newFeatures = []
@@ -7577,12 +7637,17 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
                             except (KeyError, ValueError, TypeError):
                                 pass
                     else:
-                        # Using axis_id - should match feature ID directly
-                        axis_feat = axisLayer.getFeature(axis_id)
+                        # Using axis_id: resolve attribute value to feature ID (they often differ)
+                        real_fid = axis_id_attr_to_fid.get(axis_id) if axis_id_attr_to_fid else None
+                        if real_fid is None:
+                            real_fid = axis_id  # fallback: assume axis_id equals feature ID
+                        axis_feat = axisLayer.getFeature(real_fid)
                         try:
                             is_valid = axis_feat.isValid()
                         except:
                             is_valid = axis_feat and hasattr(axis_feat, 'geometry')
+                        if is_valid:
+                            feature_id_to_use = real_fid
                     
                     if not is_valid:
                         # Both methods failed - skip this point
@@ -7688,7 +7753,12 @@ def projectObjects(objects_layer, altitude_field, axis_layer, distance, vertical
             projectedPointsLayer.dataProvider().addFeatures(newFeatures)
             debug_print("Added " + str(len(newFeatures)) + " projected points (" + str(processed_count) + " processed, " + str(skipped_count) + " skipped)")
         else:
-            debug_print("No projected points created (" + str(skipped_count) + " points skipped)")
+            try:
+                fc = filteredPointsLayer.featureCount()
+                debug_print("No projected points created (" + str(skipped_count) + " points skipped from " + str(fc) + " filtered points). "
+                            "Check that the axis layer has an 'axis_id' field, or that axis geometry can be read (e.g. not a temporary layer).")
+            except Exception:
+                debug_print("No projected points created (" + str(skipped_count) + " points skipped).")
         
     except Exception as e:
         debug_print("Error in projection loop: " + str(e))
@@ -8023,7 +8093,7 @@ def projectLinks(links_layer, objects_layer, links_layer_fields, objects_layer_f
     altField = None
 
     for field in objects_layer.fields():
-        if field.name() == altitude_field and field.typeName().lower() in ['float', 'double', 'real']:
+        if field.name() == altitude_field and field.typeName().lower() in NUMERIC_FIELD_TYPE_NAMES:
             altField = altitude_field
 
     if altField == None :
