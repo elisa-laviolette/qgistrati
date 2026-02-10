@@ -6360,9 +6360,26 @@ def createProfiles(axis_layer, dems, vertical_exaggeration = 1, intersect_layer 
         }
 
         dem_lines = runProcessingAlg('qgis:pointstopath', parameters)
+        if dem_lines is None:
+            # QGIS 3 uses native provider; omit CRS as native:pointstopath has no CRS param
+            native_params = {
+                'DATE_FORMAT': '',
+                'GROUP_FIELD': 'line_id',
+                'INPUT': projPointLayer,
+                'ORDER_FIELD': 'point_id',
+                'OUTPUT': 'memory:lines',
+            }
+            dem_lines = runProcessingAlg('native:pointstopath', native_params)
 
         if type(dem_lines) is str:
             dem_lines = QgsVectorLayer(dem_lines, 'lines', 'memory')
+
+        if dem_lines is None:
+            debug_print(
+                "Points to path algorithm failed (no output). "
+                "Check that projected points layer has valid features with line_id and point_id."
+            )
+            continue
 
         ## Add lines to main line layer
 
