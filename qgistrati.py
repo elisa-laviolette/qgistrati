@@ -6667,6 +6667,10 @@ def createProfileGrid(profile, axis_layer, vertical_exaggeration = 1, interval =
     ***************************************************************************
     Creates grids for profiles for each axis.
 
+    Axes that have no profile features (no points or vertices on that axis) are
+    skipped; only axes with valid extents get grid lines. Returns None if no
+    axis has any profile data.
+
     PARAMETERS:
     * profile : profile line layer or projected points layer to create grid from | instance of QgsVectorLayer class
     * axis_layer : line layer containing axis | instance of QgsVectorLayer class, must be a Line vector layer
@@ -6895,6 +6899,22 @@ def createProfileGrid(profile, axis_layer, vertical_exaggeration = 1, interval =
                     ymax = point.y()
 
         extents[axis_id] = [xmin, xmax, ymin, ymax]
+
+    # Drop axes that have no profile data (ymin/ymax still at init sentinel values).
+    # Otherwise math.floor(ymin / interval) raises OverflowError when ymin is inf.
+    invalid_axis_ids = [
+        aid for aid, val in extents.items()
+        if not math.isfinite(val[2]) or not math.isfinite(val[3]) or val[2] > val[3]
+    ]
+    for aid in invalid_axis_ids:
+        del extents[aid]
+
+    if not extents:
+        debug_print("No valid extents: no profile features matched any axis.")
+        if progress_bar is not None:
+            progress_bar.setMaximum(progress_bar_max)
+            progress_bar.setValue(0)
+        return None
 
     # Round min and max values according to range
 
